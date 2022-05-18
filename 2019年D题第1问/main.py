@@ -5,7 +5,6 @@ Created on Thu May 12 18:29:03 2022
 
 @author: chenzhenhua
 """
-import openpyxl
 import pandas as pd
 import time as t
 import numpy as np
