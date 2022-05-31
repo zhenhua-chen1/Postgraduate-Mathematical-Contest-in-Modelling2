@@ -6,14 +6,14 @@
 # 目前更新代码
 1 2019年D题第一问
 
-      条件：numpy、panadas和scipy库；
+      条件：numpy(1.20.1)、panadas(1.4.2)和scipy(1.6.2)库；
       输入：变量filenumber=1为输入文件1，文件2和3以此类推；
       功能：对时间序列、车速及怠速预处理；
       输出：result.xlsx文件。
 
 1 2019年D题第二问
 
-      条件：panadas和matplotlib库；
+      条件：panadas(1.4.2)和matplotlib(3.3.4)库；
       输入：变量filenumber=1为输入文件1，文件2和3以此类推(该文件是第一问预处理完的)；
       功能：选取运动学片段；
       输出：运动学片段总数量、result.xlsx文件及某个片段图片。
