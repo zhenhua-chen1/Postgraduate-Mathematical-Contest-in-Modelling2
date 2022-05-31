@@ -78,18 +78,18 @@ for i in range(1, len(data_speed)):
                 #print('缺少 '+data_time[i]+' 之后的时间')
                 if int(delta_t)<=time_interval:
                     for j in range(int(delta_t)-1):
-                        data_new=data_new.append(data.iloc[i,:],ignore_index=True) 
+                        data_new=pd.concat([data_new,data.iloc[i:i+1,:]],ignore_index=True)
                         new_timeArray=t.localtime(timeStamp1+(j+1))
                         new_time=t.strftime("%Y/%m/%d %H:%M:%S.000.",new_timeArray)
                         data_new.iloc[-1,0]=new_time
                     if abs(speed)>emplison and speed<=Acceleration and speed>=-8:
                         y=insert_num(int(delta_t),speed1,data_speed[i])
                         data_new.iloc[-1:-1-int(delta_t):-1,1]=y[-2::-1]
-                    data_new=data_new.append(data.iloc[i,:],ignore_index=True) 
+                    data_new=pd.concat([data_new,data.iloc[i:i+1,:]],ignore_index=True)
                 else:
-                   data_new=data_new.append(data.iloc[i,:],ignore_index=True)
+                   data_new=pd.concat([data_new,data.iloc[i:i+1,:]],ignore_index=True)
             else: #处理车速毛刺点
-                data_new=data_new.append(data.iloc[i,:],ignore_index=True)
+                data_new=pd.concat([data_new,data.iloc[i:i+1,:]],ignore_index=True)
                 if speed>Acceleration:
                     data_new.iloc[-1:,1]=speed1+Acceleration
                 elif speed<-8:
