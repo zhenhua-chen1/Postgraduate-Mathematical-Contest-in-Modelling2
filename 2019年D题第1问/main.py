@@ -8,7 +8,6 @@ Created on Thu May 12 18:29:03 2022
 import pandas as pd
 import time as t
 import numpy as np
-from sys import exit
 from scipy.interpolate import interp1d #倒入插值库
 
 
@@ -16,17 +15,8 @@ from scipy.interpolate import interp1d #倒入插值库
 read the data
 '''
 def DataGet():
-    print("Select number of file (1-3):")
-    n = None
-    try:
-        n = int(input())
-    except Exception as e:
-        print("Invalid number of files.")
-        exit(0)
-    if not n or n < 1 or n > 3:
-        print("Invalid number of files.")
-        exit(0)
-    filename='文件'+str(n)+'.xlsx'
+    filenumber = 1 #文件2修改为2，文件3修改为3.
+    filename='文件'+str(filenumber)+'.xlsx'
     sheet_name='原始数据'+filename[-6]
     data = pd.read_excel(filename, sheet_name,index_col = False)
 #    data2 = pd.read_excel('文件2.xlsx', sheet_name='原始数据2',index_col = False)
@@ -58,6 +48,7 @@ def insert_num(delta_t,speed1,speed2):
 
 n=0 # 计数器
 emplison=0.1#精度(小于该值视为匀速)
+print('读取数据')
 data,data_time,data_speed,x_pos,y_pos,filename=DataGet()# read the data
 time_interval=2
 data_new= data.iloc[0:1,:]
@@ -90,19 +81,19 @@ for i in range(1, len(data_speed)):
                         data_new=data_new.append(data.iloc[i,:],ignore_index=True) 
                         new_timeArray=t.localtime(timeStamp1+(j+1))
                         new_time=t.strftime("%Y/%m/%d %H:%M:%S.000.",new_timeArray)
-                        data_new['时间'][-1:]=new_time
+                        data_new.iloc[-1,0]=new_time
                     if abs(speed)>emplison and speed<=Acceleration and speed>=-8:
                         y=insert_num(int(delta_t),speed1,data_speed[i])
-                        data_new['GPS车速'][-1:-1-int(delta_t):-1]=y[-2::-1]
+                        data_new.iloc[-1:-1-int(delta_t):-1,1]=y[-2::-1]
                     data_new=data_new.append(data.iloc[i,:],ignore_index=True) 
                 else:
                    data_new=data_new.append(data.iloc[i,:],ignore_index=True)
             else: #处理车速毛刺点
                 data_new=data_new.append(data.iloc[i,:],ignore_index=True)
                 if speed>Acceleration:
-                    data_new['GPS车速'][-1:]=speed1+Acceleration
+                    data_new.iloc[-1:,1]=speed1+Acceleration
                 elif speed<-8:
-                    data_new['GPS车速'][-1:]=speed1-8           
+                    data_new.iloc[-1:,1]=speed1-8           
 
 '''
 output
@@ -111,7 +102,6 @@ output
 print('算法结束导入数据'+filename[-6])
 
 writer = pd.ExcelWriter('result'+filename[-6]+'.xlsx')
-sheetname='预处理数据'+filename[-6]
+sheetname='文件'+filename[-6]+'的运动学片段'
 data_new.to_excel(writer, sheet_name = sheetname, index = False)
 writer.save()
-writer.close()
