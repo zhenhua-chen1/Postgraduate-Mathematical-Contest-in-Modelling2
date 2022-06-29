@@ -8,7 +8,7 @@ Created on Tue Jun 14 19:52:51 2022
 import numpy as np
 import pandas as pd
 from sklearn.cluster import KMeans
-from sklearn.metrics import silhouette_score
+from sklearn.decomposition import PCA
 import matplotlib.pyplot as plt  # 导入绘图库
 
 #读取数据
@@ -162,14 +162,22 @@ if __name__ == "__main__":
     data1.to_excel(writer, sheet_name = sheetname, index = False)
     writer.save()
     
+     #调用PCA算法
+    #for k in [K]:
+   # pca = PCA(n_components=9)
+   # pca1 = pca.fit(data1)
+    #explained_var = pca.explained_variance_ratio_ # 获取贡献率
+
+    
     print('开始聚类')
     #调用KMeans聚类算法
-    score = []
     K = 3 # 分为K类
-    for k in [K]:
-        clf = KMeans(n_clusters=k)
-        lab = clf.fit_predict(data1)
-        score.append(silhouette_score(data1, clf.labels_, metric='euclidean'))
+    #for k in [K]:
+    clf = KMeans(n_clusters=K)
+    lab1 = clf.fit(data1)
+    lab = lab1.labels_
+    
+        #score.append(silhouette_score(data1, clf.labels_, metric='euclidean'))
     
     #画聚类图
     colorStore = ['or', 'og', 'ob', 'oc', 'om', 'oy', 'ok']
