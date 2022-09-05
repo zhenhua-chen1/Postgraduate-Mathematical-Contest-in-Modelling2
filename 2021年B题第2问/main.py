@@ -75,10 +75,12 @@ for d in range(sample):
 #归一化
 scaler = MinMaxScaler(feature_range=(-1, 1))  #将数据归一到0到1，可以根据数据特点归一到-1到1
 mydata = scaler.fit_transform(Weather)  #归一化
+mydata2 = scaler.fit_transform(pollution)  #归一化
 
-mydata = pd.DataFrame(mydata,columns=['温度(℃)','湿度(%)','气压(MBar)','风速(m/s)','风向(°)'])
+mydata2 = pd.DataFrame(mydata2,columns=['SO2监测浓度(μg/m³)','NO2监测浓度(μg/m³)','PM10监测浓度(μg/m³)','PM2.5监测浓度(μg/m³)',	'O3监测浓度(μg/m³)',	'CO监测浓度(mg/m³)','温度(℃)','湿度(%)','气压(MBar)','风速(m/s)','风向(°)'])
+mydata2_corr = mydata2 .corr("pearson")
 print('相关系数为：')
-print(mydata .corr("pearson"))
+print(mydata2 .corr("pearson"))
 
 
 
@@ -108,3 +110,8 @@ for key in range(5):
 result_dict['AQI'] = Aqi_mean
 result_dict = pd.DataFrame(result_dict,index=['第一类','第二类','第三类','第四类','第五类'])
 print(result_dict)
+
+#输出文件
+writer = pd.ExcelWriter('相关系数.xlsx')
+mydata2_corr.to_excel(writer)
+writer.save()
