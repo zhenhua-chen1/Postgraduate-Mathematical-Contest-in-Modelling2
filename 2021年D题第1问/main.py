@@ -12,6 +12,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from sklearn.model_selection import train_test_split
 from sklearn.ensemble import RandomForestRegressor #导入随机森林
+import seaborn as sns
 
 
 def DataGet():
@@ -105,6 +106,14 @@ for p in range(len(pos1)):
         delte.append(pos2[p])
 delte = list(set(delte)) #去重
 delte = np.array(delte)[0:10] #删除10个强相关性的变量
+delte_names = np.array(features_names)[delte]
+data_ra = data_ra.drop(index=delte_names, columns=delte_names)
+plt.figure(3)
+sns.heatmap(round(data_ra,2), annot = True, linewidths=.5, cmap="YlGnBu") 
+plt.title('Correlation between features', fontsize = 30)
+plt.show()
+print('删除变量为:')
+print(delte_names)
 features_names = np.delete(np.array(features_names),delte)
 print('最后对生物活性最具有显著影响的20个分子描述符为:：')
 print(features_names)
