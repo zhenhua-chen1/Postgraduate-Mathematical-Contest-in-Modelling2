@@ -72,6 +72,13 @@
       条件：numpy(1.20.1)、panadas(1.4.2)、scikit-learn(0.24.1)和matplotlib(3.3.4)库；
       输入：ERα_activity和Molecular_Descriptor文件；
       功能：用3sigmal准则做数据预处理、用随机森林进行特征值分析并取前30个、用pearson计算相关性及剔除10个强相关性变量；
-      输出：30个变量的特征图和相关性文件及其最后的20个结果。
+      输出：30个变量的特征图、相关性热力图和相关性文件及其最后的20个结果。
+      
+ 11 2021年D题第二问
+
+      条件：numpy(1.20.1)、panadas(1.4.2)、scikit-learn(0.24.1)和matplotlib(3.3.4)库；
+      输入：ERα_activity和Molecular_Descriptor文件；
+      功能：用KNN插值做、用线性回归、神经网络、随机森林和决策树进行预测；
+      输出：各个预测拟合图和活性结果。
       
       
