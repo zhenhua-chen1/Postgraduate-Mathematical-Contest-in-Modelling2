@@ -67,7 +67,8 @@ print('共剔除'+str(len(num_len))+'个变量')
 #使用随机森林降维
 print('使用随机森林开始降维')
 model = RandomForestRegressor(random_state=1, max_depth=10)
-data1_training=pd.get_dummies(data1_training)
+#data1_training=pd.get_dummies(data1_training)
+data1_training = data1_training.iloc[:,1:]
 model.fit(data1_training,data2_output)
 features = data1_training.columns
 importances = model.feature_importances_
