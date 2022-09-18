@@ -78,7 +78,13 @@
 
       条件：numpy(1.20.1)、panadas(1.4.2)、scikit-learn(0.24.1)和matplotlib(3.3.4)库；
       输入：ERα_activity和Molecular_Descriptor文件；
-      功能：用KNN插值做、用线性回归、神经网络、随机森林和决策树进行预测；
+      功能：用KNN插值做、用线性回归、神经网络、随机森林和决策树进行回归预测；
       输出：各个预测拟合图和活性结果。
       
+ 12 2021年D题第三问
+
+      条件：panadas(1.4.2)、scikit-learn(0.24.1)和matplotlib(3.3.4)库；
+      输入：ERα_activity和ADMET文件；
+      功能：用SVM、随机森林和决策树进行分类预测；
+      输出：各个预测ROC图和分类结果文件。
       
