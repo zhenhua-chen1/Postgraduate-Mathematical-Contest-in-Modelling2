@@ -44,12 +44,12 @@ def get_assess(data_activity_training,score,clf,f_name):
     mse = mean_squared_error(y, data_activity_training)
     evs = explained_variance_score(y, data_activity_training)
     rmse = np.sqrt(mean_squared_error(y, data_activity_training))
-    print(f_name+"预测的R2：",score)
-    print(f_name+"预测的绝对误差为：",mae)
-    print(f_name+"预测的均方误差为：",mse)
-    print(f_name+"预测的均方根误差为：",rmse)
-    print(f_name+"预测的解释方差模型回归得分为：",evs)
-    return y
+    #print(f_name+"预测的R2：",score)
+    #print(f_name+"预测的绝对误差为：",mae)
+    #print(f_name+"预测的均方误差为：",mse)
+    #print(f_name+"预测的均方根误差为：",rmse)
+    #print(f_name+"预测的解释方差模型回归得分为：",evs)
+    return y,mae,mse,evs,rmse
 
 def polt_result(clf):
     plt.subplots(2,1)
@@ -87,33 +87,41 @@ data_activity_training = imputer.fit_transform(data_activity_training)
 #x_train, x_test, y_train, y_test = train_test_split(data1_training, data_activity_training , random_state=123, train_size=0.8)
 index = np.random.randint(0,len(data1_training),size=50)
 print('选择预测模型并得出评价指标')
+dic = {'评价指标\模型':['MAE','MSE','RMSE','EVS','R2']}
 #使用线性回归
 clf1=LinearRegression()
 clf1.fit(data1_training, data_activity_training); 
 score1=clf1.score(data1_training, data_activity_training)
-y1 = get_assess(data_activity_training,score1,clf1,'线性回归') #得出评价指标
+y1,mae1,mse1,evs1,rmse1= get_assess(data_activity_training,score1,clf1,'线性回归') #得出评价指标
+dic.update({'线性回归':[mae1,mse1,rmse1,evs1,score1]})
 polt_result(clf1)
 
 #使用神经网络
 clf2=MLPRegressor(hidden_layer_sizes=(10,), random_state=10,learning_rate_init=0.1)
 clf2.fit(data1_training, data_activity_training)
 score2=clf2.score(data1_training, data_activity_training)
-y2 = get_assess(data_activity_training,score2,clf2,'神经网络')  #得出评价指标
+y2,mae2,mse2,evs2,rmse2= get_assess(data_activity_training,score2,clf2,'神经网络')  #得出评价指标
 polt_result(clf2)
+dic.update({'神经网络':[mae2,mse2,rmse2,evs2,score2]})
 
 #使用随机森林
 clf3=RandomForestRegressor()
 clf3.fit(data1_training, data_activity_training)
 score3=clf3.score(data1_training, data_activity_training)
-y3 = get_assess(data_activity_training,score3,clf3,'随机森林')  #得出评价指标
+y3,mae3,mse3,evs3,rmse3 = get_assess(data_activity_training,score3,clf3,'随机森林')  #得出评价指标
 polt_result(clf3)
+dic.update({'随机森林':[mae3,mse3,rmse3,evs3,score3]})
 
 #使用决策树
 clf4=DecisionTreeRegressor()
 clf4.fit(data1_training, data_activity_training)
 score4=clf4.score(data1_training, data_activity_training)
-y4 = get_assess(data_activity_training,score4,clf4,'决策树')  #得出评价指标
+y4,mae4,mse4,evs4,rmse4 = get_assess(data_activity_training,score4,clf4,'决策树')  #得出评价指标
 polt_result(clf4)
+dic.update({'决策树':[mae4,mse4,rmse4,evs4,score4]})
+
+Evaluation_indicators = pd.DataFrame(dic)
+print(Evaluation_indicators.to_string(index=False))
 
 #选出使用模型
 score=[score1,score2,score3,score4]
@@ -146,7 +154,9 @@ print(data_activity_test2)
     
 #输出文件
 writer = pd.ExcelWriter('第二问结果.xlsx')
+writer2 = pd.ExcelWriter('第二问的模型评价指标.xlsx')
 data_activity_test2.to_excel(writer,sheet_name='test',index = False)
+Evaluation_indicators.to_excel(writer2,sheet_name='指标',index = False)
 writer.save()
-
+writer2.save()
 
