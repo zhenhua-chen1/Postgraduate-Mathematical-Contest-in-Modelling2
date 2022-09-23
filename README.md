@@ -88,7 +88,7 @@
       功能：用SVM、随机森林和决策树进行分类预测；
       输出：各个预测ROC图和分类结果文件。
  
-·13 2021年D题第四问
+ 13 2021年D题第四问
 
       条件：numpy(1.20.1)、panadas(1.4.2)和scikit-learn(0.24.1)；
       输入：Molecular_Descriptor、ERα_activity和ADMET文件；
