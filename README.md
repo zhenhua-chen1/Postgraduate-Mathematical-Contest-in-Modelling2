@@ -87,4 +87,11 @@
       输入：ERα_activity和ADMET文件；
       功能：用SVM、随机森林和决策树进行分类预测；
       输出：各个预测ROC图和分类结果文件。
+ 
+·13 2021年D题第四问
+
+      条件：numpy(1.20.1)、panadas(1.4.2)和scikit-learn(0.24.1)；
+      输入：Molecular_Descriptor、ERα_activity和ADMET文件；
+      功能：用遗传算法和随机森林优化范围；
+      输出：20个变量的范围及5个ADMET性质。
       
