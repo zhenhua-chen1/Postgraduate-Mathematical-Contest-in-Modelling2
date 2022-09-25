@@ -84,7 +84,7 @@ for ind,n in enumerate(name):
     var_range[1,ind] = max(data1_test[n])
 
 #调用遗传算法
-generation = 10  # 繁衍代数
+generation = 30  # 繁衍代数
 group_size = 100     # 染色体数量，偶数
 chrom_length = 800 *sample_num  # 染色体长度
 group = getFisrtGroup(group_size, chrom_length) #求出初始染色体
