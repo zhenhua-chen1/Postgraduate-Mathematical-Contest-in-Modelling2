@@ -10,6 +10,7 @@ import pandas as pd
 import numpy as np
 from sklearn.cluster import KMeans
 from sklearn.decomposition import PCA
+from scipy.stats import pearsonr
 from sklearn.preprocessing import MinMaxScaler
 from factor_analyzer import factor_analyzer
 import matplotlib.pyplot as plt  # 导入绘图库
@@ -36,7 +37,7 @@ def SortLab(number_list,lab):
 def Kmeans_data(data3):
     K = 5 # 分为K类
     #for k in [K]:
-    clf = KMeans(n_clusters=K)
+    clf = KMeans(n_clusters=K,n_init=10)
     lab1 = clf.fit(data3)
     lab = lab1.labels_
     cluter_center_data=clf.cluster_centers_
@@ -53,7 +54,7 @@ def Kmeans_data(data3):
 def Kmeans_data2(data3):
     K = 3 # 分为K类
     #for k in [K]:
-    clf = KMeans(n_clusters=K)
+    clf = KMeans(n_clusters=K,n_init=10)
     lab1 = clf.fit(data3)
     lab = lab1.labels_
     cluter_center_data=clf.cluster_centers_
@@ -82,7 +83,7 @@ mydata = scaler.fit_transform(data)  #归一化
 
 #开始降维
 print('开始降维')
-pca=PCA(n_components='mle',whiten=1)
+pca=PCA(n_components='mle',whiten= True)
 data2=pca.fit_transform(mydata)
 Contribution_rate=np.cumsum(pca.explained_variance_ratio_)     #计算贡献率
 dim=np.where(Contribution_rate>0.85)[0][1] #找到贡献率大于0.85的维度数
@@ -145,8 +146,8 @@ writer2 = pd.ExcelWriter('降维之后各变量均值.xlsx')
 sheetname = '数据' 
 result.to_excel(writer1, header=None, sheet_name=sheetname, index=False)
 cluter_center_data.to_excel(writer2, sheet_name=sheetname, index=False)
-writer1.save()
-writer2.save()
+writer1.close()
+writer2.close()
 
 
 #输出十大恐怖事件
