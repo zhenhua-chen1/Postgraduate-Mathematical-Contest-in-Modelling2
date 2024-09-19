@@ -173,11 +173,11 @@
       功能：用NSGA-II优化分配数量
       输出：‘results.xlsx’里面有三个(Sheet)指标：分配表、每个作品专家的评审人数、每个评审人数的作品量及Intersection Counts。
 
-25 2023年C题第二问（未完）
+25 2023年C题第二问（未完，后续更新公式2）
 
 
-      条件：numpy(1.20.1)、panadas(1.4.2)、matplotlib(3.7.1)及seaborn(0.12.2)；
+      条件：numpy(1.20.1)、panadas(1.4.2)、matplotlib(3.7.1)、scipyscipy(1.10.1)、seaborn(0.12.2)及scikit-learn(0.24.1)；
       输入：数据1文件（无需操作）
-      功能：暂时只分析了专家打分分布，运行daexpert_score_analysis_skewness_kurtosis.py(后续更新打分公式)
-      输出：打分分布图，偏差图
+      功能：运行main函数，计算了专家专业性指标、标准分及用主成分分析法测算了权重
+      输出：打分分布图，偏差图、标准分公式1和指标及新标准分结果.xlsx文件
       
