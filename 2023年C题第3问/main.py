@@ -294,7 +294,7 @@ def plot_two_fig_compare_enlegend(df,
     plt.figure(figsize=(12, 4.5))
     plt.plot(x, df[range1_col], marker="o", label="Stage 1 Range")
     plt.plot(x, df[range2_col], marker="o", label="Stage 2 Range")
-    plt.title("Range Comparison (Two Stages)")
+    plt.title("Data1:Range Comparison (Two Stages)")
     plt.xlabel("Sample Index")
     plt.ylabel("Range")
     plt.grid(True, alpha=0.3)
@@ -306,7 +306,7 @@ def plot_two_fig_compare_enlegend(df,
     plt.figure(figsize=(12, 4.5))
     plt.bar(x, df[score1_col], width=0.25, label="Stage 1 Final Score")
     plt.plot(x, df[score2_col], marker="s", linestyle="--", label="Stage 2 Final Score")
-    plt.title("Final Score Comparison (Two Stages)")
+    plt.title("Data1:Final Score Comparison (Two Stages)")
     plt.xlabel("Sample Index")
     plt.ylabel("Final Score")
     plt.grid(True, alpha=0.3)
@@ -482,5 +482,29 @@ results, best_name2, best_model2, X_train, X_test, y_train, y_test, feature_cols
 print(results)
 print("data2 Best model:", best_name2)
 
+#输出文件
+out_path = "两个数据集专家专业性指标和作品创新型指标I.xlsx"
+
+# 1) expert_score1 统一成 DataFrame
+if isinstance(expert_score1, pd.Series):
+    expert_score1_df = expert_score1.reset_index()
+    expert_score1_df.columns = ["专家编码", "专业性得分"]
+else:
+    expert_score1_df = expert_score1.copy()
+    
+
+cols = ["创新性指标I"]  # 你也可以加上作品ID等，比如 ["作品编号","创新性指标I"]
+# 2) data1（包含“创新性指标I”列）
+data1_df = data1[cols].copy()
+data2_df = data2[cols].copy()
+
+# 3) 写入同一个 Excel 的两个 sheet
+with pd.ExcelWriter(out_path, engine="openpyxl") as writer:
+    expert_score1_df.to_excel(writer, sheet_name="数据集1专家专业指标", index=False)
+    expert_score1_df.to_excel(writer, sheet_name="数据集2专家专业指标", index=False)
+    data1_df.to_excel(writer, sheet_name="数据集1创新性指标I", index=False)
+    data2_df.to_excel(writer, sheet_name="数据集2创新性指标I", index=False)
+
+print("Saved to:", out_path)
 
 
