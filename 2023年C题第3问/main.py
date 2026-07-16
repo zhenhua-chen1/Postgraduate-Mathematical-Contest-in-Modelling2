@@ -28,6 +28,12 @@ from sklearn.ensemble import RandomForestRegressor
 data1 = pd.read_excel('数据2.1.xlsx')
 data2 = pd.read_excel('数据2.2.xlsx')
 
+# 极差模型的监督学习目标。
+# 训练时优先使用复议后的极差；没有复议记录时使用第二阶段原始极差。
+# 如需复现“最终成绩”模型，只需把 fit_and_compare_models 的 target_col
+# 改为“最终成绩”，但当前第三问的主模型明确拟合极差。
+RANGE_MODEL_TARGET = "训练目标极差"
+
 def explain_innovation_linear(best_model, feature_cols, innov_col="创新性指标I"):
     # 只有当 best_model 是 LinearRegression pipeline 才适用
     if "model" not in best_model.named_steps:
@@ -40,23 +46,29 @@ def explain_innovation_linear(best_model, feature_cols, innov_col="创新性指�
     coefs = pd.Series(mdl.coef_, index=feature_cols).sort_values(key=np.abs, ascending=False)
     return coefs.loc[[innov_col]] if innov_col in coefs.index else coefs
 
+def get_model_feature_columns():
+    """返回论文问题三中使用的18个模型输入特征。"""
+    return (
+        [f"专家评分标准差{k}" for k in range(1, 6)]
+        + [f"评审作品数量{k}" for k in range(1, 6)]
+        + [f"极评指标{k}" for k in range(1, 6)]
+        + ["作品标准差", "作品均值", "创新性指标I"]
+    )
+
+
 def fit_and_compare_models(data1,
-                           target_col="最终成绩",
-                           std_cols=None,
-                           innov_col="创新性指标I",
-                           prof_cols=None,
+                           target_col=RANGE_MODEL_TARGET,
+                           feature_cols=None,
                            test_size=0.2,
                            random_state=42):
     """
-    训练/测试划分 + 拟合：线性回归、决策树、随机森林、XGBoost（可选）
+    训练/测试划分 + 拟合：线性回归、决策树和随机森林。
+    target_col 默认为训练目标极差，而不是最终成绩；
+    feature_cols 默认为论文问题三中的18个输入特征。
     输出：评估表、最佳模型、X_train/X_test/y_train/y_test、特征列名
     """
-    if std_cols is None:
-        std_cols = [f"标准分{k}" for k in range(1, 6)]
-    if prof_cols is None:
-        prof_cols = [f"专家专业性得分{k}" for k in range(1, 6)]
-
-    feature_cols = std_cols + [innov_col] + prof_cols
+    if feature_cols is None:
+        feature_cols = get_model_feature_columns()
 
     # 1) 检查列是否存在
     missing = [c for c in [target_col] + feature_cols if c not in data1.columns]
@@ -131,6 +143,162 @@ def fit_and_compare_models(data1,
 
     return results, best_name, best_model, X_train, X_test, y_train, y_test, feature_cols
 
+
+def build_range_training_target(df, out_col=RANGE_MODEL_TARGET):
+    """构造极差模型的监督学习目标。
+
+    第二阶段中，部分作品有复议后的极差，部分作品没有复议记录。
+    有复议时使用复议后极差；否则使用第二次评审标准分极差。
+    """
+    required = ["第二次评审标准分极差", "复议后极差"]
+    missing = [c for c in required if c not in df.columns]
+    if missing:
+        raise KeyError(f"缺少极差训练目标所需列：{missing}")
+
+    result = df.copy()
+    second_range = pd.to_numeric(result["第二次评审标准分极差"], errors="coerce")
+    reviewed_range = pd.to_numeric(result["复议后极差"], errors="coerce")
+    result[out_col] = reviewed_range.combine_first(second_range)
+    return result
+
+
+def adjust_large_ranges(df,
+                        best_model,
+                        feature_cols,
+                        score_col="第一次评审最终成绩",
+                        range_col="极差",
+                        low_score_z=-2.0,
+                        high_score_z=2.0,
+                        large_range_z=2.0):
+    """使用极差模型对非高分、非低分段的大极差进行自动调整。
+
+    规则与论文描述保持可解释：
+    1. 以第一阶段最终成绩的 z-score 区分高分段和低分段；
+    2. 以原始极差的 z-score 识别“大极差”；
+    3. 只对非高非低分段的大极差作品进行调整；
+    4. 调整后的极差不大于原始极差，且不会被调整为负数。
+
+    返回完整数据和调整摘要，原始列“极差”不会被覆盖。
+    """
+    required = [score_col, range_col]
+    missing = [c for c in required + list(feature_cols) if c not in df.columns]
+    if missing:
+        raise KeyError(f"极差调整缺少列：{missing}")
+
+    result = df.copy()
+    score = pd.to_numeric(result[score_col], errors="coerce")
+    raw_range = pd.to_numeric(result[range_col], errors="coerce")
+
+    score_mean = score.mean()
+    score_std = score.std(ddof=1)
+    range_mean = raw_range.mean()
+    range_std = raw_range.std(ddof=1)
+
+    if pd.isna(score_std) or score_std == 0:
+        score_z = pd.Series(0.0, index=result.index)
+    else:
+        score_z = (score - score_mean) / score_std
+
+    if pd.isna(range_std) or range_std == 0:
+        range_z = pd.Series(0.0, index=result.index)
+    else:
+        range_z = (raw_range - range_mean) / range_std
+
+    result["成绩z分数"] = score_z
+    result["极差z分数"] = range_z
+    result["分数分段"] = np.select(
+        [score_z <= low_score_z, score_z >= high_score_z],
+        ["低分段", "高分段"],
+        default="非高非低分段"
+    )
+    result["是否大极差"] = range_z >= large_range_z
+
+    # Pipeline 内含缺失值填补，因此可对完整数据集进行预测。
+    result["预测极差"] = np.asarray(best_model.predict(result[feature_cols]), dtype=float)
+    result["预测极差"] = result["预测极差"].clip(lower=0)
+
+    candidate_mask = (
+        result["分数分段"].eq("非高非低分段")
+        & result["是否大极差"]
+        & raw_range.notna()
+    )
+
+    result["调整后极差"] = raw_range
+    result.loc[candidate_mask, "调整后极差"] = np.minimum(
+        raw_range.loc[candidate_mask],
+        result.loc[candidate_mask, "预测极差"]
+    )
+    result["极差调整量"] = result[range_col] - result["调整后极差"]
+    result["是否自动调整"] = candidate_mask & (result["极差调整量"] > 0)
+
+    summary_cols = [
+        c for c in [
+            "名次", "奖项", "最终成绩", "第一次评审最终成绩",
+            "创新性指标I", "极差", "预测极差", "调整后极差",
+            "极差调整量", "成绩z分数", "极差z分数", "分数分段",
+            "是否大极差", "是否自动调整"
+        ] if c in result.columns
+    ]
+    return result, result[summary_cols].copy()
+
+
+def fit_segmented_regression(df,
+                             dataset_name,
+                             threshold,
+                             score_col="最终成绩",
+                             innov_col="创新性指标I",
+                             range_col="极差"):
+    """按成绩阈值拟合“创新性 + 极差 -> 最终成绩”的分段回归。"""
+    required = [score_col, innov_col, range_col]
+    missing = [c for c in required if c not in df.columns]
+    if missing:
+        raise KeyError(f"分段回归缺少列：{missing}")
+
+    work = df[required].copy()
+    for col in required:
+        work[col] = pd.to_numeric(work[col], errors="coerce")
+    work = work.dropna().reset_index(drop=True)
+
+    rows = []
+    for segment, mask in [
+        (f"> {threshold:.2f}", work[score_col] > threshold),
+        (f"≤ {threshold:.2f}", work[score_col] <= threshold),
+    ]:
+        part = work.loc[mask]
+        if len(part) < 3:
+            rows.append({
+                "数据集": dataset_name,
+                "阈值": threshold,
+                "分段": segment,
+                "样本数": len(part),
+                "创新性系数": np.nan,
+                "极差系数": np.nan,
+                "截距": np.nan,
+                "MSE": np.nan,
+                "R2": np.nan,
+            })
+            continue
+
+        X = part[[innov_col, range_col]]
+        y = part[score_col]
+        model = LinearRegression()
+        model.fit(X, y)
+        pred = model.predict(X)
+
+        rows.append({
+            "数据集": dataset_name,
+            "阈值": threshold,
+            "分段": segment,
+            "样本数": len(part),
+            "创新性系数": model.coef_[0],
+            "极差系数": model.coef_[1],
+            "截距": model.intercept_,
+            "MSE": mean_squared_error(y, pred),
+            "R2": r2_score(y, pred),
+        })
+
+    return pd.DataFrame(rows)
+
 def melt_expert_scores(df, k_range=range(1, 9),
                        code_prefix="专家编码", score_prefix="原始分"):
     parts = []
@@ -177,13 +345,49 @@ def attach_expert_score(df,
 
     return df
 
+
+def attach_expert_metrics(df,
+                          expert_metrics,
+                          expert_code_cols=("专家编码1", "专家编码2", "专家编码3",
+                                            "专家编码4", "专家编码5")):
+    """把专家级指标映射到每件作品的5位第一阶段专家。
+
+    每个作品最终得到以下列：
+    - 专家评分标准差1~5
+    - 评审作品数量1~5
+    - 极评指标1~5
+    - 专业性得分1~5（保留用于结果分析）
+    """
+    required = ["专家编码", "专家评分标准差", "评审作品数量", "极评指标", "专业性得分"]
+    missing = [c for c in required if c not in expert_metrics.columns]
+    if missing:
+        raise KeyError(f"专家指标表缺少列：{missing}")
+
+    result = df.copy()
+    lookup = expert_metrics[required].copy()
+    lookup["专家编码"] = lookup["专家编码"].astype("string").str.strip()
+    lookup = lookup.drop_duplicates(subset=["专家编码"]).set_index("专家编码")
+
+    metric_cols = [
+        "专家评分标准差", "评审作品数量", "极评指标", "专业性得分"
+    ]
+    for metric in metric_cols:
+        for i, code_col in enumerate(expert_code_cols, start=1):
+            if code_col not in result.columns:
+                raise KeyError(f"作品数据缺少列：{code_col}")
+            codes = result[code_col].astype("string").str.strip()
+            result[f"{metric}{i}"] = codes.map(lookup[metric])
+
+    return result
+
+
 def add_innovation_index(df,expert_score,
                          std_prefix="标准分",
                          ks=range(1, 6),
                          out_col="创新性指标I",
                          inplace=False):
     """
-    对每个样本（每行）的标准分1~标准分8计算创新性指标：
+    对每个样本（每行）的第一阶段标准分1~标准分5计算创新性指标：
     I = 0.1*(μ/σ) + 0.7*|Skewness| + 0.2*(Max/Q3)
 
     Parameters
@@ -212,6 +416,9 @@ def add_innovation_index(df,expert_score,
 
     # 转成数值（避免Excel读入为字符串）
     df[std_cols] = df[std_cols].apply(pd.to_numeric, errors="coerce")
+    # 作品级评分分布指标，作为极差模型的直接输入。
+    df["作品标准差"] = df[std_cols].std(axis=1, ddof=0)
+    df["作品均值"] = df[std_cols].mean(axis=1)
 
     def _calc_row(values):
         s = pd.Series(values).dropna()
@@ -230,14 +437,7 @@ def add_innovation_index(df,expert_score,
         return 0.1 * term1 + 0.7 * abs(skew) + 0.2 * term3
 
     df[out_col] = df[std_cols].apply(lambda row: _calc_row(row.values), axis=1)
-    df = attach_expert_score(
-        df,
-        expert_score,
-        expert_code_cols=("专家编码1","专家编码2","专家编码3","专家编码4","专家编码5"),
-        expert_id_col="专家编码",
-        score_col="专业性得分",
-        out_prefix="专家专业性得分"   # 输出列名：专家专业性得分1~5
-    )
+    df = attach_expert_metrics(df, expert_score)
     return df
 
 def preprocess_scores(df,
@@ -377,8 +577,11 @@ def calculate_expert_professionalism_score(df):
     # 计算分数列表长度，并根据长度选择前5个专家
     grouped_result['评审作品数量'] = grouped_result['分数列表'].apply(len)
 
-    # 计算标准差
-    grouped_result['标准差'] = grouped_result['分数列表'].apply(lambda x: pd.Series(x).std())
+    # 计算标准差。
+    # 使用总体标准差，避免只有1条有效评分的专家产生 NaN。
+    grouped_result['标准差'] = grouped_result['分数列表'].apply(
+        lambda x: pd.Series(x).std(ddof=0)
+    )
 
     # 初始化极评指标的计数器
     grouped_result['最高分计数'] = 0
@@ -413,8 +616,17 @@ def calculate_expert_professionalism_score(df):
     # 计算极评指标
     grouped_result['极评指标'] = abs((grouped_result['最高分计数'] - grouped_result['最低分计数']) / grouped_result['评审作品数量'])
 
-    # 选取需要进行PCA分析的变量
-    pca_data = grouped_result[['标准差', '评审作品数量', '极评指标']]
+    # 选取需要进行PCA分析的变量，并在进入 PCA 前处理异常缺失值。
+    pca_data = grouped_result[['标准差', '评审作品数量', '极评指标']].apply(
+        pd.to_numeric, errors='coerce'
+    )
+    pca_data = pca_data.replace([np.inf, -np.inf], np.nan)
+    if pca_data.isna().any().any():
+        missing_rows = pca_data.index[pca_data.isna().any(axis=1)].tolist()
+        print(f"PCA 指标存在缺失值，使用列中位数填补，行索引：{missing_rows}")
+        pca_data = pca_data.fillna(pca_data.median())
+        # 如果某一列整体为空，再用0作为最后兜底值。
+        pca_data = pca_data.fillna(0)
 
     # 数据标准化到0-1
     scaler = MinMaxScaler()
@@ -430,81 +642,139 @@ def calculate_expert_professionalism_score(df):
     # 计算每个专家的最终专业性得分，基于主成分结果和贡献率加权求和
     grouped_result['专业性得分'] = np.dot(pca_result, weights)
 
-    return grouped_result[['专家编码','专业性得分']]
+    # 保留专家原始指标，后续将其逐位映射到每件作品的5位专家。
+    return grouped_result[
+        ['专家编码', '专业性得分', '标准差', '评审作品数量', '极评指标']
+    ].rename(columns={'标准差': '专家评分标准差'})
 
 
-#数据预处理
-data2 = data2.drop(columns=["学校编码"]) #去除学校编码
+# 数据预处理：保留全量作品，第二阶段数据只在训练极差模型时单独筛选。
+data2 = data2.drop(columns=["学校编码"])  # 去除学校编码
 data1 = preprocess_scores(
     data1,
-    dropna_col="专家编码6",
+    dropna_col=None,
     review_ks=(6, 7, 8),
-    score1_col="第一次评审最终成绩",      # 你想叫啥列名都行
+    score1_col="第一次评审最终成绩",
     score1_ks=(1, 2, 3, 4, 5)
 )
-
 data2 = preprocess_scores(
     data2,
-    dropna_col="专家编码6",
+    dropna_col=None,
     review_ks=(6, 7, 8),
-    score1_col="第一次评审最终成绩",      # 你想叫啥列名都行
+    score1_col="第一次评审最终成绩",
     score1_ks=(1, 2, 3, 4, 5)
 )
 
-#画对比图
-plot_two_fig_compare_enlegend(data1,
-                     range1_col="极差",
-                     range2_col="第二次评审标准分极差",
-                     score1_col="第一次评审最终成绩",
-                     score2_col="最终成绩")
+# 计算专家专业性指标和创新性指标时使用全量数据，便于后续对第一阶段作品预测。
+expert_score1 = calculate_expert_professionalism_score(data1)
+data1 = add_innovation_index(data1, expert_score1)
 
-boxplot_data2_twofig(data2,
-                     range1_col="极差",
-                     range2_col="第二次评审标准分极差",
-                     score1_col="第一次评审最终成绩",
-                     score2_col="最终成绩")
+expert_score2 = calculate_expert_professionalism_score(data2)
+data2 = add_innovation_index(data2, expert_score2)
 
-#建立指标
-#数据集1
-expert_score1 = calculate_expert_professionalism_score(data1) #计算专家专业性指标
-data1 = add_innovation_index(data1,expert_score1) #加入创新性指标和专业性指标
+# 第二阶段作品有真实的第二阶段极差/复议后极差，可用于监督学习训练。
+stage2_data1 = data1.loc[data1["专家编码6"].notna()].copy()
+stage2_data2 = data2.loc[data2["专家编码6"].notna()].copy()
+stage2_data1 = build_range_training_target(stage2_data1)
+stage2_data2 = build_range_training_target(stage2_data2)
 
-#数据集2
-expert_score2 = calculate_expert_professionalism_score(data2) #计算专家专业性指标
-data2 = add_innovation_index(data2,expert_score2) #加入创新性指标和专业性指标
+# 论文中的两阶段对比图只针对存在第二阶段评审记录的作品。
+plot_two_fig_compare_enlegend(
+    stage2_data1.reset_index(drop=True),
+    range1_col="极差",
+    range2_col="第二次评审标准分极差",
+    score1_col="第一次评审最终成绩",
+    score2_col="最终成绩"
+)
+boxplot_data2_twofig(
+    stage2_data2.reset_index(drop=True),
+    range1_col="极差",
+    range2_col="第二次评审标准分极差",
+    score1_col="第一次评审最终成绩",
+    score2_col="最终成绩"
+)
 
-#建立极差模型
-results, best_name1, best_model1, X_train, X_test, y_train, y_test, feature_cols1 = fit_and_compare_models(data1)
-print(results)
-print("data1 Best model:", best_name1)
+# 建立极差模型：目标明确为“训练目标极差”，不是最终成绩。
+results1, best_name1, best_model1, *_rest1, feature_cols1 = fit_and_compare_models(
+    stage2_data1,
+    target_col=RANGE_MODEL_TARGET
+)
+results2, best_name2, best_model2, *_rest2, feature_cols2 = fit_and_compare_models(
+    stage2_data2,
+    target_col=RANGE_MODEL_TARGET
+)
+print("数据集1极差模型评价：")
+print(results1)
+print("数据集1最佳模型：", best_name1)
+print("数据集2极差模型评价：")
+print(results2)
+print("数据集2最佳模型：", best_name2)
 
-results, best_name2, best_model2, X_train, X_test, y_train, y_test, feature_cols2 = fit_and_compare_models(data2)
-print(results)
-print("data2 Best model:", best_name2)
+# 对全量数据识别并调整非高非低分段的大极差，原始“极差”列保持不变。
+adjusted_data1, adjustment1 = adjust_large_ranges(
+    data1, best_model1, feature_cols1
+)
+adjusted_data2, adjustment2 = adjust_large_ranges(
+    data2, best_model2, feature_cols2
+)
+adjustment1.insert(0, "数据集", "数据集1")
+adjustment2.insert(0, "数据集", "数据集2")
 
-#输出文件
+# 复现论文中的分段回归阈值：数据集1为270.24，数据集2为249.32。
+segmented1 = fit_segmented_regression(
+    data1, "数据集1", threshold=270.24, range_col="极差"
+)
+segmented2 = fit_segmented_regression(
+    data2, "数据集2", threshold=249.32, range_col="极差"
+)
+segmented_results = pd.concat([segmented1, segmented2], ignore_index=True)
+
+model_results = pd.concat([
+    results1.assign(数据集="数据集1", 模型目标=RANGE_MODEL_TARGET,
+                    是否最佳=results1["Model"].eq(best_name1)),
+    results2.assign(数据集="数据集2", 模型目标=RANGE_MODEL_TARGET,
+                    是否最佳=results2["Model"].eq(best_name2))
+], ignore_index=True)
+
+# 输出文件：保留原有指标 Sheet，同时增加模型评价、极差调整和分段回归结果。
 out_path = "两个数据集专家专业性指标和作品创新型指标I.xlsx"
+expert_score1_df = expert_score1.copy()
+expert_score2_df = expert_score2.copy()
 
-# 1) expert_score1 统一成 DataFrame
-if isinstance(expert_score1, pd.Series):
-    expert_score1_df = expert_score1.reset_index()
-    expert_score1_df.columns = ["专家编码", "专业性得分"]
-else:
-    expert_score1_df = expert_score1.copy()
-    
+result_cols = [
+    c for c in [
+        "名次", "奖项", "最终成绩", "第一次评审最终成绩",
+        "极差", "作品标准差", "作品均值", "创新性指标I"
+    ] if c in data1.columns
+]
+data1_df = data1[result_cols].copy()
+data2_df = data2[result_cols].copy()
 
-cols = ["创新性指标I"]  # 你也可以加上作品ID等，比如 ["作品编号","创新性指标I"]
-# 2) data1（包含“创新性指标I”列）
-data1_df = data1[cols].copy()
-data2_df = data2[cols].copy()
+# 将实际进入模型的18个特征单独输出，方便核对论文指标和复现实验。
+model_feature_cols = list(dict.fromkeys(feature_cols1 + feature_cols2))
+data1_input_cols = [
+    c for c in ["名次", "最终成绩", "极差"] + model_feature_cols
+    if c in data1.columns
+]
+data2_input_cols = [
+    c for c in ["名次", "最终成绩", "极差"] + model_feature_cols
+    if c in data2.columns
+]
+data1_input_df = data1[data1_input_cols].copy()
+data2_input_df = data2[data2_input_cols].copy()
+feature_desc = pd.DataFrame({"模型输入特征": model_feature_cols})
 
-# 3) 写入同一个 Excel 的两个 sheet
 with pd.ExcelWriter(out_path, engine="openpyxl") as writer:
     expert_score1_df.to_excel(writer, sheet_name="数据集1专家专业指标", index=False)
-    expert_score1_df.to_excel(writer, sheet_name="数据集2专家专业指标", index=False)
+    expert_score2_df.to_excel(writer, sheet_name="数据集2专家专业指标", index=False)
     data1_df.to_excel(writer, sheet_name="数据集1创新性指标I", index=False)
     data2_df.to_excel(writer, sheet_name="数据集2创新性指标I", index=False)
+    model_results.to_excel(writer, sheet_name="极差模型评价", index=False)
+    adjustment1.to_excel(writer, sheet_name="数据集1极差调整", index=False)
+    adjustment2.to_excel(writer, sheet_name="数据集2极差调整", index=False)
+    segmented_results.to_excel(writer, sheet_name="分段回归结果", index=False)
+    data1_input_df.to_excel(writer, sheet_name="数据集1模型输入指标", index=False)
+    data2_input_df.to_excel(writer, sheet_name="数据集2模型输入指标", index=False)
+    feature_desc.to_excel(writer, sheet_name="模型输入特征说明", index=False)
 
 print("Saved to:", out_path)
-
-
