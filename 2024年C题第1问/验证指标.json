@@ -1,0 +1,68 @@
+{
+  "sample_count": 12400,
+  "feature_count": 28,
+  "stratified_5fold": {
+    "accuracy": 1.0,
+    "macro_f1": 1.0,
+    "classification_report": {
+      "正弦波": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1-score": 1.0,
+        "support": 4054.0
+      },
+      "三角波": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1-score": 1.0,
+        "support": 4948.0
+      },
+      "梯形波": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1-score": 1.0,
+        "support": 3398.0
+      },
+      "accuracy": 1.0,
+      "macro avg": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1-score": 1.0,
+        "support": 12400.0
+      },
+      "weighted avg": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1-score": 1.0,
+        "support": 12400.0
+      }
+    }
+  },
+  "leave_one_material_out": {
+    "材料1": {
+      "sample_count": 3400,
+      "accuracy": 1.0,
+      "macro_f1": 1.0
+    },
+    "材料2": {
+      "sample_count": 3000,
+      "accuracy": 1.0,
+      "macro_f1": 1.0
+    },
+    "材料3": {
+      "sample_count": 3200,
+      "accuracy": 1.0,
+      "macro_f1": 1.0
+    },
+    "材料4": {
+      "sample_count": 2800,
+      "accuracy": 1.0,
+      "macro_f1": 1.0
+    }
+  },
+  "test_prediction_consistency": {
+    "agreement_count": 80,
+    "sample_count": 80,
+    "disagreement_sample_ids": []
+  }
+}
