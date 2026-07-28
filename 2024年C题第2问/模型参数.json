@@ -1,0 +1,32 @@
+{
+  "sample_count": 1067,
+  "temperature_levels_oC": [
+    25,
+    50,
+    70,
+    90
+  ],
+  "f_reference_Hz": 121640.03046598147,
+  "b_reference_T": 0.05770218276365316,
+  "temperature_reference_oC": 25.0,
+  "temperature_scale_oC": 65.0,
+  "traditional_coefficients": {
+    "ln_P0": 9.997060520990424,
+    "P0": 21961.814528020357,
+    "alpha": 1.6080155670054517,
+    "beta": 2.501844861139465
+  },
+  "corrected_coefficients": {
+    "ln(P0)": 10.440979920755249,
+    "alpha0": 1.2937026275547199,
+    "beta0": 2.4639709808568333,
+    "c1": -1.236119897651062,
+    "c2": 0.4704986742118214,
+    "alpha_T": 0.657369614212244,
+    "beta_T": 0.11221924351448523
+  },
+  "validation": {
+    "method": "5-fold shuffled cross-validation",
+    "seed": 2024
+  }
+}
