@@ -1,0 +1,40 @@
+{
+  "sample_count": 12400,
+  "reference_condition": {
+    "frequency_Hz": 156343.4225952349,
+    "flux_peak_T": 0.05361763928488419
+  },
+  "ancova_main_effect_rank": [
+    "温度",
+    "励磁波形",
+    "磁芯材料"
+  ],
+  "random_forest_factor_rank": [
+    "温度",
+    "励磁波形",
+    "磁芯材料"
+  ],
+  "minimum_adjusted_condition": {
+    "temperature_oC": 90,
+    "waveform": "正弦波",
+    "material": "材料1",
+    "predicted_loss_w_per_m3": 21063.19851726516
+  },
+  "validation": {
+    "folds": 5,
+    "seed": 2024,
+    "pairwise_model": {
+      "模型": "加入两两交互作用",
+      "参数个数": 33,
+      "全样本调整R2": 0.9701833992346006,
+      "AIC": 7580.20257537888,
+      "五折_R2": 0.9019839984808616,
+      "五折_RMSE": 117814.78770069005,
+      "五折_MAE": 39387.79981873251,
+      "五折_MAPE_percent": 28.181314311263677,
+      "五折_RMSLE": 0.33298945693430904
+    }
+  },
+  "model_formula": "log_loss ~ log_f_c + log_b_c + log_f_c:log_b_c + C(temperature, Sum) + C(waveform, Sum) + C(material, Sum) + C(temperature, Sum):C(waveform, Sum) + C(temperature, Sum):C(material, Sum) + C(waveform, Sum):C(material, Sum)",
+  "note": "正式最低损耗条件在共同频率和磁通密度峰值下比较。"
+}
