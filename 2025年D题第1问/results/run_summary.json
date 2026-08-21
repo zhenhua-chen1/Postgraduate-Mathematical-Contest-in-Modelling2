@@ -1,0 +1,55 @@
+{
+  "random_seed": 2025,
+  "profiler_files": 12,
+  "profiler_rows": 453,
+  "radiometer_temperature_rows_after_deduplication": 2324,
+  "station_time_profiles": 12,
+  "modeling_rows": 453,
+  "model_a": "gradient Richardson number from profiler wind and radiometer temperature",
+  "spatial_features": [
+    "height_m",
+    "vertical_speed_mps",
+    "model_b_shear_per_s"
+  ],
+  "spatiotemporal_features": [
+    "height_m",
+    "vertical_speed_mps",
+    "model_b_shear_per_s",
+    "horizontal_wind_tendency_mps2",
+    "vertical_wind_tendency_mps2",
+    "shear_tendency_per_s2"
+  ],
+  "validation": "6-fold GroupKFold by complete station-time profile",
+  "baseline_metrics": {
+    "mae": 4.713089718250182,
+    "rmse": 5.714580733780198,
+    "r2": 0.4747748197523587
+  },
+  "spatial_metrics": {
+    "mae": 3.9404268320892806,
+    "rmse": 4.906672826724892,
+    "r2": 0.612786050531471
+  },
+  "spatiotemporal_metrics": {
+    "mae": 3.868244133876166,
+    "rmse": 4.886322573495957,
+    "r2": 0.615991302397616
+  },
+  "selected_model": "spatiotemporal",
+  "selected_model_formula_original_units": {
+    "intercept": 14.52141174915077,
+    "coefficients": {
+      "height_m": 0.0013945237071520292,
+      "vertical_speed_mps": -2.1463668713169364,
+      "model_b_shear_per_s": -1296.6135099547216,
+      "horizontal_wind_tendency_mps2": -1827.9249932805951,
+      "vertical_wind_tendency_mps2": -61.47711823685465,
+      "shear_tendency_per_s2": 570405.7949347594
+    }
+  },
+  "ri_training_target": {
+    "minimum": 0.0,
+    "maximum": 20.0
+  },
+  "maximum_nearest_radiometer_gap_minutes": 2.0
+}
