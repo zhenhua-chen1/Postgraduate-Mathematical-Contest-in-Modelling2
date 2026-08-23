@@ -26,28 +26,28 @@ b 站微波辐射计文件含重复时次，且最早记录为 00:02，而风廓
 5. 在非等距垂直网格上计算位温梯度与水平风切变；
 6. 计算梯度理查逊数：
 
-\[
+$$
 Ri = \frac{(g/\theta)\,(\partial \theta/\partial z)}
 {(\partial u/\partial z)^2+(\partial v/\partial z)^2}.
-\]
+$$
 
 较小的 `Ri` 表示风切变相对于稳定层结更强。代码同时给出便于可视化的 `turbulence_index = 1/(1+Ri)`；论文判断仍以原始 `Ri` 为准。
 
 ## 模型 B：仅风廓线雷达的时空模型
 
-模型 B 不使用温度、湿度或气压。气象风向先转换为水平分量 \(u,v\)，对每条垂直廓线进行居中五层滑动平均，再计算风切变强度：
+模型 B 不使用温度、湿度或气压。气象风向先转换为水平分量 $u,v$，对每条垂直廓线进行居中五层滑动平均，再计算风切变强度：
 
-\[
+$$
 S=\sqrt{(\partial u/\partial z)^2+(\partial v/\partial z)^2}.
-\]
+$$
 
 空间基线模型使用高度 `height_m`、垂直风速 `vertical_speed_mps` 和风切变 `model_b_shear_per_s`。
 
 在此基础上，时空模型沿同一站点、同一高度的时间序列增加三项显式时间特征：
 
-- 水平风矢量变化率 \(\sqrt{(\partial u/\partial t)^2+(\partial v/\partial t)^2}\)；
-- 垂直风速变化率 \(|\partial w/\partial t|\)；
-- 垂直风切变变化率 \(|\partial S/\partial t|\)。
+- 水平风矢量变化率 $\sqrt{(\partial u/\partial t)^2+(\partial v/\partial t)^2}$；
+- 垂直风速变化率 $|\partial w/\partial t|$；
+- 垂直风切变变化率 $|\partial S/\partial t|$。
 
 时间梯度基于实际秒数计算，并先进行居中三时次滑动平均。只有一个时次支持的个别高空层将时间变化率设为 0，同时在结果中记录 `temporal_support_count`。为抑制极稳定层中极大的 `Ri` 对回归的支配，训练目标和输出限制在 `[0, 20]`。
 
