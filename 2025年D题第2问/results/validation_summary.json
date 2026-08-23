@@ -1,0 +1,12 @@
+{
+  "target_time": "2025-07-31T02:00:00",
+  "high_turbulence_threshold": 0.65,
+  "validation_methods": [
+    "leave_one_weather_radar_out",
+    "paired_scan_reproducibility",
+    "leave_one_wpr_out",
+    "leave_one_surface_station_out",
+    "radar_wpr_cross_sensor_agreement"
+  ],
+  "records": 47285
+}

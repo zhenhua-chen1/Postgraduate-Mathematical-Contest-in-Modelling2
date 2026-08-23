@@ -1,0 +1,8 @@
+source,kind,valid_rows,stations,scan_times,calibration_low,calibration_high,calibration_unit,raw_sw_median_mps,corrected_sw_median_mps,median_shear_broadening_mps,instrument_noise_floor_mps,corrected_zero_fraction,low,high,unit
+S9250,weather_radar,2944,538.0,2.0,0.0,4.471483539749595,m/s,2.0,1.9303343354725442,0.06492670831425609,0.5,0.19259510869565216,,,
+X205,weather_radar,1991,275.0,2.0,0.0,1.9637942829834174,m/s,1.5,1.4509843538076685,0.06374399513743906,0.375,0.12656956303365144,,,
+ZM206,weather_radar,2623,314.0,2.0,0.0,1.4523687548277813,m/s,1.5,1.4523687548277813,0.0,0.375,0.3385436523065192,,,
+ZM207,weather_radar,2852,332.0,2.0,0.0,1.4523687548277813,m/s,1.5,1.4523687548277813,0.0,0.375,0.3159186535764376,,,
+WPR_spectrum_width,wind_profiler,77,,,,,,,,,,,1.3250000000000002,6.05,m/s
+WPR_dynamic_proxy,wind_profiler,77,,,,,,,,,,,0.8847260439301762,2.087120855479119,1
+surface_wind_proxy,surface_station,505,,,0.5952229148376386,1.6112880983002504,1,,,,,,,,
