@@ -1,0 +1,3 @@
+﻿comparison,spearman_rank_correlation,five_level_agreement,top10_overlap
+critic_vs_entropy,0.9554223563178669,0.5537514341013986,3
+critic_vs_pca,0.928603979769473,0.4645525165742711,0

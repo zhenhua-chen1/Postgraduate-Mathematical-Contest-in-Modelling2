@@ -1,0 +1,33 @@
+{
+  "random_seed": 2025,
+  "events": 114183,
+  "method": "leave-one-out risk encoding + consequence-constrained two-level CRITIC + ordered 1D KMeans",
+  "bootstrap_runs": 100,
+  "direct_impact_weight": 0.7,
+  "group_weights": {
+    "direct_impact": 0.7,
+    "operational_complexity": 0.14200840839828147,
+    "contextual_risk": 0.1579915916017186
+  },
+  "level_counts": {
+    "1": 36426,
+    "2": 14411,
+    "3": 16335,
+    "4": 26654,
+    "5": 20357
+  },
+  "top10_eventids": [
+    200811260006,
+    200811260010,
+    201005280003,
+    200703300001,
+    201511130008,
+    201306150003,
+    201010310008,
+    200109110007,
+    200109110005,
+    200109110004
+  ],
+  "median_bootstrap_rank_correlation": 0.9999937334528594,
+  "median_bootstrap_level_agreement": 0.9968
+}

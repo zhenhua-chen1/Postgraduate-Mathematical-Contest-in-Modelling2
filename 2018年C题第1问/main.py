@@ -357,7 +357,7 @@ def direct_weight_sensitivity(
 
 
 def save_figures(result: pd.DataFrame, weights: pd.DataFrame, output: Path) -> None:
-    """仅在指定 --output 时保存分布图和客观权重图。"""
+    """把危害得分分布图和客观权重图保存到结果文件夹。"""
     figure_dir = output / "figures"
     figure_dir.mkdir(parents=True, exist_ok=True)
     plt.style.use("seaborn-v0_8-whitegrid")
@@ -390,6 +390,7 @@ def save_figures(result: pd.DataFrame, weights: pd.DataFrame, output: Path) -> N
 
 
 def save_legacy_named_workbooks(
+    output: Path,
     result: pd.DataFrame,
     level_summary: pd.DataFrame,
     weights: pd.DataFrame,
@@ -399,13 +400,13 @@ def save_legacy_named_workbooks(
     bootstrap: pd.DataFrame,
     weight_sensitivity: pd.DataFrame,
 ) -> None:
-    """覆盖原项目的两个 Excel 文件名，不额外改变用户既有命名。"""
+    """在结果文件夹内生成两个原名称的 Excel 文件。"""
     # 第一个文件严格保持原结构：无表头，仅保存事件编号和危害等级。
     result[["eventid", "危害等级"]].to_excel(
-        "案件等级编号.xlsx", sheet_name="数据", header=False, index=False
+        output / "案件等级编号.xlsx", sheet_name="数据", header=False, index=False
     )
     # 第二个文件集中保存模型解释、重点事件和全部稳定性检验结果。
-    with pd.ExcelWriter("降维之后各变量均值.xlsx") as writer:
+    with pd.ExcelWriter(output / "降维之后各变量均值.xlsx") as writer:
         level_summary.to_excel(writer, sheet_name="五级统计", index=False)
         weights.to_excel(writer, sheet_name="指标权重", index=False)
         top10.to_excel(writer, sheet_name="十大事件", index=False)
@@ -422,12 +423,20 @@ def main() -> None:
     parser.add_argument(
         "--output",
         type=Path,
-        default=None,
-        help="可选：另行保存 CSV、图表和运行摘要的目录",
+        default=Path("优化结果"),
+        help="结果文件夹，默认在 main.py 同级目录下创建“优化结果”",
     )
     parser.add_argument("--bootstrap-runs", type=int, default=100)
     args = parser.parse_args()
     started_at = perf_counter()
+
+    # Spyder 的工作目录可能不是代码所在目录。这里统一以 main.py 所在位置
+    # 解析相对路径，因此直接点击绿色运行按钮也能找到附件并保存结果。
+    project_dir = Path(__file__).resolve().parent
+    if not args.input.is_absolute():
+        args.input = project_dir / args.input
+    if not args.output.is_absolute():
+        args.output = project_dir / args.output
 
     if not args.input.exists():
         raise FileNotFoundError(f"找不到输入文件：{args.input.resolve()}")
@@ -440,8 +449,7 @@ def main() -> None:
     progress(f"Bootstrap 次数：{args.bootstrap_runs}")
     progress("=" * 60)
 
-    if args.output is not None:
-        args.output.mkdir(parents=True, exist_ok=True)
+    args.output.mkdir(parents=True, exist_ok=True)
 
     progress("[1/8] 正在读取原始数据……")
     data = pd.read_excel(args.input, usecols=USE_COLUMNS)
@@ -488,20 +496,21 @@ def main() -> None:
         group_scores, group_weights, score, levels
     )
 
-    # 详细 CSV 和图表属于可选输出；默认只覆盖原来的两个 Excel 文件。
-    if args.output is not None:
-        progress(f"      正在写入可选详细结果目录：{args.output.resolve()}")
-        result.to_csv(args.output / "案件危害分级.csv", index=False, encoding="utf-8-sig")
-        top10.to_csv(args.output / "危害程度最高的十大事件.csv", index=False, encoding="utf-8-sig")
-        typical.to_csv(args.output / "表1典型事件分级.csv", index=False, encoding="utf-8-sig")
-        weights.to_csv(args.output / "CRITIC指标权重.csv", index=False, encoding="utf-8-sig")
-        level_summary.to_csv(args.output / "五级划分统计.csv", index=False, encoding="utf-8-sig")
-        method_validation.to_csv(args.output / "多方法一致性.csv", index=False, encoding="utf-8-sig")
-        bootstrap.to_csv(args.output / "Bootstrap稳定性.csv", index=False, encoding="utf-8-sig")
-        weight_sensitivity.to_csv(args.output / "直接后果权重敏感性.csv", index=False, encoding="utf-8-sig")
-        save_figures(result, weights, args.output)
-    progress("[8/8] 正在覆盖原名称的两个 Excel 结果文件……")
+    # 所有结果统一放在一个文件夹，项目根目录不再散落输出文件。
+    progress(f"      正在写入结果文件夹：{args.output.resolve()}")
+    result.to_csv(args.output / "案件危害分级.csv", index=False, encoding="utf-8-sig")
+    top10.to_csv(args.output / "危害程度最高的十大事件.csv", index=False, encoding="utf-8-sig")
+    typical.to_csv(args.output / "表1典型事件分级.csv", index=False, encoding="utf-8-sig")
+    weights.to_csv(args.output / "CRITIC指标权重.csv", index=False, encoding="utf-8-sig")
+    level_summary.to_csv(args.output / "五级划分统计.csv", index=False, encoding="utf-8-sig")
+    method_validation.to_csv(args.output / "多方法一致性.csv", index=False, encoding="utf-8-sig")
+    bootstrap.to_csv(args.output / "Bootstrap稳定性.csv", index=False, encoding="utf-8-sig")
+    weight_sensitivity.to_csv(args.output / "直接后果权重敏感性.csv", index=False, encoding="utf-8-sig")
+    save_figures(result, weights, args.output)
+
+    progress("[8/8] 正在生成两个 Excel 汇总文件……")
     save_legacy_named_workbooks(
+        args.output,
         result,
         level_summary,
         weights,
@@ -524,14 +533,13 @@ def main() -> None:
         "median_bootstrap_rank_correlation": float(bootstrap["spearman_rank_correlation"].median()),
         "median_bootstrap_level_agreement": float(bootstrap["five_level_agreement"].median()),
     }
-    if args.output is not None:
-        (args.output / "run_summary.json").write_text(
-            json.dumps(summary, ensure_ascii=False, indent=2), encoding="utf-8"
-        )
+    (args.output / "run_summary.json").write_text(
+        json.dumps(summary, ensure_ascii=False, indent=2), encoding="utf-8"
+    )
     progress("\n运行摘要：")
     progress(json.dumps(summary, ensure_ascii=False, indent=2))
     progress(f"\n运行完成，总耗时 {perf_counter() - started_at:.1f} 秒。")
-    progress("已生成：案件等级编号.xlsx、降维之后各变量均值.xlsx")
+    progress(f"全部结果已保存到：{args.output.resolve()}")
 
 
 if __name__ == "__main__":

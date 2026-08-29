@@ -1,0 +1,14 @@
+﻿dimension,indicator,top_dimension,dimension_weight,within_dimension_weight,linear_equivalent_weight,aggregation_rule
+property_impact,property_damage,direct_impact,0.7,0.7199353692321149,,"max(casualty, property)"
+casualty_impact,victim_injuries,direct_impact,0.7,0.40095574330187944,,"max(casualty, property)"
+casualty_impact,victim_fatalities,direct_impact,0.7,0.39562459722838295,,"max(casualty, property)"
+property_impact,property_extent,direct_impact,0.7,0.2800646307678851,,"max(casualty, property)"
+casualty_impact,hostages_kidnapped,direct_impact,0.7,0.2034196594697377,,"max(casualty, property)"
+contextual_risk,weapon_type_risk,contextual_risk,0.1579915916017186,0.2739246552666715,0.043277792264533516,weighted_sum
+contextual_risk,region_risk,contextual_risk,0.1579915916017186,0.2630925172833812,0.041566405544104054,weighted_sum
+contextual_risk,attack_type_risk,contextual_risk,0.1579915916017186,0.23336542469321994,0.03686977487209282,weighted_sum
+contextual_risk,target_type_risk,contextual_risk,0.1579915916017186,0.22961740275672746,0.03627761892098822,weighted_sum
+operational_complexity,multiple_incident,operational_complexity,0.14200840839828147,0.3120490552295895,0.04431358967534143,weighted_sum
+operational_complexity,attack_success,operational_complexity,0.14200840839828147,0.2785503255929501,0.039556488396277935,weighted_sum
+operational_complexity,extended_event,operational_complexity,0.14200840839828147,0.20492703224357833,0.029101361686693868,weighted_sum
+operational_complexity,suicide_attack,operational_complexity,0.14200840839828147,0.20447358693388198,0.02903696863996822,weighted_sum
