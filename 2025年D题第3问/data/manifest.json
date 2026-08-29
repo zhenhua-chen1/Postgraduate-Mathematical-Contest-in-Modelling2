@@ -1,0 +1,21 @@
+{
+  "format_version": 1,
+  "description": "GitHub-portable compact inputs for Question 3",
+  "model_c": "model_c_validation_1km_50m.npz",
+  "nwp_grid": "nwp/grid.npz",
+  "nwp_files": [
+    "nwp_regular_202507310200.npz",
+    "nwp_regular_202507310230.npz",
+    "nwp_regular_202507310300.npz",
+    "nwp_regular_202507310330.npz",
+    "nwp_regular_202507310400.npz",
+    "nwp_regular_202507310430.npz",
+    "nwp_regular_202507310500.npz",
+    "nwp_regular_202507310530.npz",
+    "nwp_regular_202507310630.npz",
+    "nwp_regular_202507310700.npz",
+    "nwp_regular_202507310730.npz",
+    "nwp_regular_202507310800.npz"
+  ],
+  "source_paths_included": false
+}
