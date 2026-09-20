@@ -1,0 +1,5 @@
+﻿split,events,organizations,positive_pairs,negative_pairs,negative_same_country_fraction,negative_same_country_method_fraction,years
+train_2015,914,47,3753,3753,0.460431654676259,0.2922994937383427,2015
+validation_unseen_organizations,2519,18,1752,1752,0.3607305936073059,0.2802511415525114,"2015,2016"
+test_unseen_organizations,386,19,1534,1534,0.2953063885267275,0.1551499348109517,"2015,2016"
+test_temporal_2016,808,40,3071,3071,0.40703353956366,0.2377075871051774,2016
