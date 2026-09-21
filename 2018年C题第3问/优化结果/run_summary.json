@@ -1,0 +1,187 @@
+{
+  "status": "completed",
+  "random_seed": 20260921,
+  "information_cutoff": "2017-12-31",
+  "elapsed_seconds": 45.93,
+  "run_at": "2026-09-21T13:22:08.249142+08:00",
+  "executable": "/opt/anaconda3/bin/python",
+  "python": "3.13.5",
+  "platform": "macOS-26.3.1-arm64-arm-64bit-Mach-O",
+  "dependencies": {
+    "numpy": "2.1.3",
+    "pandas": "2.2.3",
+    "scipy": "1.15.3",
+    "statsmodels": "0.14.4",
+    "matplotlib": "3.10.0",
+    "openpyxl": "3.1.5",
+    "threadpoolctl": "3.5.0"
+  },
+  "input_sha256": {
+    "2018年C题第3问/附件1.xlsx": "710bbab753b3cb91ba58dff709b5a1e423dfbb26f3429d52d423e73698fabc57",
+    "2018年C题第1问/优化结果/案件危害分级.csv": "bdea30d93627779405a1837b5daed5c9134325b4362b25257ed55b0ebcd8b2b3",
+    "2018年C题第1问/附件1.xlsx": "710bbab753b3cb91ba58dff709b5a1e423dfbb26f3429d52d423e73698fabc57"
+  },
+  "code_sha256": {
+    "conclusions.py": "9f3a9327d080b640a39910c4e679ea4624798a3d7448a89add56a20e8780488f",
+    "data_analysis.py": "01f2d8a49ff728dd59c7b1df30d83605c5cae3ab5af3880d7dd95cc87ecb340c",
+    "main.py": "d0922f8183561565e41fffdb8de916679c1739113f80239c4576b4b06d5dc53f",
+    "reporting.py": "f067e6f0c574357713c73c89b9adac4405e4558126a45f40813cb9528c183526",
+    "forecasting.py": "29d095ac37eaf8e23a5c83e41393ffc6fba735e2cafe13dda178710ca78059fd"
+  },
+  "sources_sha256": "a47f502b77530b06c37141df285fb03db385c7f3a25e9882291e3090068d7f68",
+  "events": 114183,
+  "recent_events": 39452,
+  "coordinate_counts": {
+    "有效": 39244,
+    "缺失": 208
+  },
+  "global_2018": {
+    "地区": "全球",
+    "年份": 2018,
+    "2017实际事件数": 10900.0,
+    "预测事件数": 9858.697538167482,
+    "相对2017变化率": -0.09553233594793742,
+    "下限80": 6866.289979902085,
+    "上限80": 12851.105096432879,
+    "下限95": 5282.2051059076375,
+    "上限95": 14435.189970427327
+  },
+  "global_2017_metrics": [
+    {
+      "地区": "全球",
+      "方案": "冻结方案",
+      "MAE": 209.2261969411583,
+      "RMSE": 225.4626787338538,
+      "WAPE": 0.23034076727466968,
+      "偏差_预测减实际": 209.19668651945835,
+      "年度实际事件数": 10900.0,
+      "年度预测事件数": 13410.3602382335,
+      "年度误差_预测减实际": 2510.3602382334993,
+      "覆盖率80": 0.9166666666666666,
+      "平均宽度80": 575.5023955447441,
+      "年度下限80": 10464.959598614065,
+      "年度上限80": 16355.760877852934,
+      "年度覆盖80": true,
+      "覆盖率95": 1.0,
+      "平均宽度95": 880.1549610724327,
+      "年度下限95": 8905.758684224144,
+      "年度上限95": 17914.961792242855,
+      "年度覆盖95": true
+    },
+    {
+      "地区": "全球",
+      "方案": "季节朴素基线",
+      "MAE": 223.91666666666666,
+      "RMSE": 235.8949271745085,
+      "WAPE": 0.24651376146788992,
+      "偏差_预测减实际": 223.91666666666666,
+      "年度实际事件数": null,
+      "年度预测事件数": null,
+      "年度误差_预测减实际": null,
+      "覆盖率80": null,
+      "平均宽度80": null,
+      "年度下限80": null,
+      "年度上限80": null,
+      "年度覆盖80": null,
+      "覆盖率95": null,
+      "平均宽度95": null,
+      "年度下限95": null,
+      "年度上限95": null,
+      "年度覆盖95": null
+    },
+    {
+      "地区": "全球",
+      "方案": "近12月均值基线",
+      "MAE": 223.91666666666666,
+      "RMSE": 246.49116786070314,
+      "WAPE": 0.24651376146788992,
+      "偏差_预测减实际": 223.91666666666666,
+      "年度实际事件数": null,
+      "年度预测事件数": null,
+      "年度误差_预测减实际": null,
+      "覆盖率80": null,
+      "平均宽度80": null,
+      "年度下限80": null,
+      "年度上限80": null,
+      "年度覆盖80": null,
+      "覆盖率95": null,
+      "平均宽度95": null,
+      "年度下限95": null,
+      "年度上限95": null,
+      "年度覆盖95": null
+    }
+  ],
+  "selected_models": [
+    {
+      "地区": "北美",
+      "模型": "近12月均值"
+    },
+    {
+      "地区": "中美洲与加勒比",
+      "模型": "近12月均值"
+    },
+    {
+      "地区": "南美",
+      "模型": "近12月均值"
+    },
+    {
+      "地区": "东亚",
+      "模型": "近12月均值"
+    },
+    {
+      "地区": "东南亚",
+      "模型": "阻尼季节ETS"
+    },
+    {
+      "地区": "南亚",
+      "模型": "低阶SARIMA"
+    },
+    {
+      "地区": "中亚",
+      "模型": "近12月均值"
+    },
+    {
+      "地区": "西欧",
+      "模型": "近12月均值"
+    },
+    {
+      "地区": "东欧",
+      "模型": "阻尼季节ETS"
+    },
+    {
+      "地区": "中东与北非",
+      "模型": "低阶SARIMA"
+    },
+    {
+      "地区": "撒哈拉以南非洲",
+      "模型": "阻尼季节ETS"
+    },
+    {
+      "地区": "大洋洲",
+      "模型": "近12月均值"
+    },
+    {
+      "地区": "全球",
+      "模型": "地区加总"
+    }
+  ],
+  "fitting_exceptions": 0,
+  "figures": [
+    "/Users/chenzhenhua/Documents/GitHub/Postgraduate-Mathematical-Contest-in-Modelling2/2018年C题第3问/优化结果/figures/01_全球走势与季节性.png",
+    "/Users/chenzhenhua/Documents/GitHub/Postgraduate-Mathematical-Contest-in-Modelling2/2018年C题第3问/优化结果/figures/02_地区与级别分布.png",
+    "/Users/chenzhenhua/Documents/GitHub/Postgraduate-Mathematical-Contest-in-Modelling2/2018年C题第3问/优化结果/figures/03_年度空间次数与危害.png",
+    "/Users/chenzhenhua/Documents/GitHub/Postgraduate-Mathematical-Contest-in-Modelling2/2018年C题第3问/优化结果/figures/04_空间演变与国家变化.png",
+    "/Users/chenzhenhua/Documents/GitHub/Postgraduate-Mathematical-Contest-in-Modelling2/2018年C题第3问/优化结果/figures/05_2017独立回测.png",
+    "/Users/chenzhenhua/Documents/GitHub/Postgraduate-Mathematical-Contest-in-Modelling2/2018年C题第3问/优化结果/figures/06_2018月度预测.png",
+    "/Users/chenzhenhua/Documents/GitHub/Postgraduate-Mathematical-Contest-in-Modelling2/2018年C题第3问/优化结果/figures/07_2018年度预测.png",
+    "/Users/chenzhenhua/Documents/GitHub/Postgraduate-Mathematical-Contest-in-Modelling2/2018年C题第3问/优化结果/figures/08_事件特征结构.png"
+  ],
+  "verification": "日期、计数、评分、区间、加总、Excel重读及输入未改全部通过",
+  "limitations": [
+    "事件时间回测，不是历史数据版本回测",
+    "评分仅回顾性描述",
+    "区间复用选模期误差，有乐观偏差；正态和稳定性为假设",
+    "独立测试只有一年，部分地区不如基线且区间覆盖不足",
+    "2012采集变化；空间重分布不等于因果传播；未验证2018真值"
+  ]
+}

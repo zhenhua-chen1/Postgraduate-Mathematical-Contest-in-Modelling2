@@ -1,0 +1,7 @@
+﻿编号,机构,标题,发布日期,信息范围,用途,证据,链接
+S1,Institute for Economics & Peace,Global Terrorism Index 2017,2017-11,主要统计截至2016；部分背景截至2017报告编写时,原因背景与风险情景，不进入预测模型,执行摘要及第62页：冲突、政治暴力、排斥与群体不满相关；领土丧失可能伴随人员外流。相关证据不能证明单一成因。,https://www.visionofhumanity.org/wp-content/uploads/2020/10/Global-Terrorism-Index-2017.pdf
+S2,UNDP,Journey to Extremism in Africa (2017),2017-09-07,非洲受访者回溯报告，不代表全球人口或全部恐袭事件,招募机制背景，不进入预测模型,第73页讨论政府行为作为部分自愿加入者报告的直接触发因素；支持依法执法、减少群体排斥及社区预防，不能把访谈比例当成全球因果概率。,https://www.undp.org/publications/journey-extremism-africa
+S3,United Nations Security Council,Resolution 2396 (2017) adoption coverage,2017-12-21,截至决议通过日,2018跨区域转移情景与政策依据，不进入预测模型,关注外国恐怖作战人员回流和转移，强调依法共享信息、刑事司法及保护软目标。它是风险判断和政策文件，不是传播路径的统计识别。,https://press.un.org/en/2017/sc13138.doc.htm
+S4,START / Michael Jensen,Benefits and Drawbacks of Methodological Advancements in Data Collection and Coding,2013-11-25,说明2012年前后GTD采集口径变化,历史比较与回测限制,2012年采集范围和效率改进，2011—2012直接比较可能夸大真实增幅；滚动验证跨越该断点，不能将计数变化全部归因于现实风险。,https://www.start.umd.edu/news/discussion-point-benefits-and-drawbacks-methodological-advancements-data-collection-and-coding
+M1,Hyndman and Athanasopoulos,"Forecasting: Principles and Practice, Time series cross-validation",方法参考，非2018预测输入,现代方法文档，访问于2026-09-21,滚动预测起点与多步验证设计,训练观测必须早于测试观测；验证跨度应与实际任务一致。,https://otexts.com/fpp3/tscv.html
+M2,statsmodels,ExponentialSmoothing and SARIMAX API,方法参考，非2018预测输入,软件实现参考，访问于2026-09-21,明确季节周期12、阻尼趋势和固定低阶候选,软件依赖版本随运行摘要记录；没有使用2018实际结果或当前新闻作为模型信号。,https://www.statsmodels.org/stable/tsa.html
