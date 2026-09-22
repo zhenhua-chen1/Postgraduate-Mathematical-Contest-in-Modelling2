@@ -1,107 +1,231 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""
-Created on Thu May 12 18:29:03 2022
+"""2019 年 D 题第一问：三份车辆数据预处理。
 
-@author: chenzhenhua
+在 Spyder 中打开本文件并点击绿色运行箭头即可。程序不依赖当前工作目录，
+原始文件始终只读，所有新结果写入同目录的“优化结果”文件夹。
 """
-import pandas as pd
-import time as t
+from __future__ import annotations
+
+import hashlib
+import importlib.metadata
+import json
+import platform
+import sys
+from datetime import datetime
+from pathlib import Path
+from time import perf_counter
+
 import numpy as np
-from scipy.interpolate import interp1d #倒入插值库
+import pandas as pd
+from openpyxl import load_workbook
+from openpyxl.styles import Alignment, Font, PatternFill
+
+BASE = Path(__file__).resolve().parent
+if str(BASE) not in sys.path:
+    sys.path.insert(0, str(BASE))
+
+from preprocessing import PreprocessConfig, preprocess_vehicle_data, validate_processed_data  # noqa: E402
+
+OUTPUT = BASE / "优化结果"
+INPUTS = [BASE / f"文件{i}.xlsx" for i in range(1, 4)]
 
 
-'''
-read the data
-'''
-def DataGet():
-    filenumber = 1 #文件2修改为2，文件3修改为3.
-    filename='文件'+str(filenumber)+'.xlsx'
-    sheet_name='原始数据'+filename[-6]
-    data = pd.read_excel(filename, sheet_name,index_col = False)
-#    data2 = pd.read_excel('文件2.xlsx', sheet_name='原始数据2',index_col = False)
-#    data3 = pd.read_excel('文件3.xlsx', sheet_name='原始数据3',index_col = False)
-#    data = data1.append(data2,ignore_index=True)
-#    data = data.append(data3,ignore_index=True)
-    #data= pd.read_excel('文件11.xlsx', sheet_name='原始数据1',index_col = False)
-    data_speed = data[u'GPS车速']
-    data_time = data[u'时间']
-    x_pos=np.array(data[u'经度'])
-    y_pos=np.array(data[u'纬度'])
-    data_speed = data_speed*1000/3600
-    return data,data_time,data_speed,x_pos,y_pos,filename
+class Progress:
+    """在控制台实时显示进度，并同步保存完整日志。"""
 
-def TimeGet(time1,time2):
-    timeArray1=t.strptime(time1, "%Y/%m/%d %H:%M:%S.000.")
-    timeStamp1 = t.mktime(timeArray1)
-    timeArray2=t.strptime(time2, "%Y/%m/%d %H:%M:%S.000.")
-    timeStamp2 = t.mktime(timeArray2)
-    delta_t=timeStamp2-timeStamp1
-    return delta_t,timeStamp1
+    def __init__(self, output: Path):
+        self.start = perf_counter()
+        self.path = output / "运行日志.txt"
+        self.path.write_text("", encoding="utf-8")
 
-def insert_num(delta_t,speed1,speed2):
-    f1=interp1d([0,1],[speed1,speed2],kind='linear')
-    x_pred=np.linspace(0,delta_t-1,num=delta_t+1)
-    y=f1(x_pred)*3600/1000
-    return y
-    
+    def __call__(self, message: str) -> None:
+        line = f"[{datetime.now():%H:%M:%S} | {perf_counter() - self.start:6.1f}s] {message}"
+        print(line, flush=True)
+        with self.path.open("a", encoding="utf-8") as stream:
+            stream.write(line + "\n")
 
-n=0 # 计数器
-emplison=0.1#精度(小于该值视为匀速)
-print('读取数据')
-data,data_time,data_speed,x_pos,y_pos,filename=DataGet()# read the data
-time_interval=2
-data_new= data.iloc[0:1,:]
-outlier = [] #将异常值保存
-Acceleration=3.96 #最大加速度
-print_time=0
 
-print('算法开始')
-for i in range(1, len(data_speed)):
-    time1=np.array(data_new[u'时间'])[-1]
-    x1_pos=np.array(data_new[u'经度'])[-1]
-    y1_pos=np.array(data_new[u'纬度'])[-1]
-    print_time1=time1[11:13]
-    if int(print_time)!=int(print_time1):
-        print('开始'+time1[0:13]+'点的数据处理')
-        print_time=print_time1
-    speed1=np.array(data_new[u'GPS车速'])[-1]*1000/3600
-    
-    delta_t,timeStamp1=TimeGet(time1,data_time[i])#求出时间变化量变化量
-    speed=data_speed[i]- speed1#求出速度变化量
-    if data_speed[i]>2.7 or n<180:#处理怠速时间
-            if data_speed[i]>2.7:
-                n=0
+def sha256(path: Path) -> str:
+    digest = hashlib.sha256()
+    with path.open("rb") as stream:
+        for block in iter(lambda: stream.read(1024 * 1024), b""):
+            digest.update(block)
+    return digest.hexdigest()
+
+
+def json_text(value) -> str:
+    def convert(item):
+        if isinstance(item, dict):
+            return {key: convert(val) for key, val in item.items()}
+        if isinstance(item, (list, tuple)):
+            return [convert(val) for val in item]
+        if isinstance(item, (np.integer, np.floating)):
+            return item.item()
+        if isinstance(item, (Path, pd.Timestamp)):
+            return str(item)
+        if isinstance(item, float) and not np.isfinite(item):
+            return None
+        return item
+
+    return json.dumps(convert(value), ensure_ascii=False, indent=2, allow_nan=False)
+
+
+def read_input(path: Path, file_number: int) -> pd.DataFrame:
+    """读取指定原始工作表，并保留输入列顺序。"""
+    expected_sheet = f"原始数据{file_number}"
+    with pd.ExcelFile(path) as book:
+        if expected_sheet not in book.sheet_names:
+            raise ValueError(f"{path.name} 缺少工作表“{expected_sheet}”。")
+        return pd.read_excel(book, sheet_name=expected_sheet)
+
+
+def style_workbook(path: Path, freeze_cell: str = "A2") -> None:
+    """使用轻量样式提高可读性，不改变数据值。"""
+    book = load_workbook(path)
+    try:
+        for sheet in book.worksheets:
+            sheet.freeze_panes = freeze_cell
+            sheet.auto_filter.ref = sheet.dimensions
+            sheet.sheet_view.showGridLines = False
+            for cell in sheet[1]:
+                cell.fill = PatternFill("solid", fgColor="1F4E78")
+                cell.font = Font(color="FFFFFF", bold=True, name="Arial", size=10)
+                cell.alignment = Alignment(horizontal="center", vertical="center")
+            for column_index, header in enumerate(sheet[1], 1):
+                letter = header.column_letter
+                sample = [
+                    str(sheet.cell(row, column_index).value)
+                    if sheet.cell(row, column_index).value is not None else ""
+                    for row in range(1, min(sheet.max_row, 200) + 1)
+                ]
+                sheet.column_dimensions[letter].width = min(max(max(map(len, sample), default=8) + 2, 10), 28)
+            if sheet.title == "处理汇总":
+                sheet.column_dimensions["A"].width = 12
+                for letter in "BCDEFGHI":
+                    sheet.column_dimensions[letter].width = 18
+                sheet.column_dimensions["J"].width = 25
+                sheet.column_dimensions["K"].width = 25
+            elif sheet.title == "方法与阈值":
+                sheet.column_dimensions["A"].width = 14
+                sheet.column_dimensions["B"].width = 72
             else:
-                n=n+1
-            if int(delta_t)!=1:#处理时间不连续
-                #print('缺少 '+data_time[i]+' 之后的时间')
-                if int(delta_t)<=time_interval:
-                    for j in range(int(delta_t)-1):
-                        data_new=pd.concat([data_new,data.iloc[i:i+1,:]],ignore_index=True)
-                        new_timeArray=t.localtime(timeStamp1+(j+1))
-                        new_time=t.strftime("%Y/%m/%d %H:%M:%S.000.",new_timeArray)
-                        data_new.iloc[-1,0]=new_time
-                    if abs(speed)>emplison and speed<=Acceleration and speed>=-8:
-                        y=insert_num(int(delta_t),speed1,data_speed[i])
-                        data_new.iloc[-1:-1-int(delta_t):-1,1]=y[-2::-1]
-                    data_new=pd.concat([data_new,data.iloc[i:i+1,:]],ignore_index=True)
-                else:
-                   data_new=pd.concat([data_new,data.iloc[i:i+1,:]],ignore_index=True)
-            else: #处理车速毛刺点
-                data_new=pd.concat([data_new,data.iloc[i:i+1,:]],ignore_index=True)
-                if speed>Acceleration:
-                    data_new.iloc[-1:,1]=speed1+Acceleration
-                elif speed<-8:
-                    data_new.iloc[-1:,1]=speed1-8           
+                sheet.column_dimensions["A"].width = 22
+                sheet.column_dimensions["Q"].width = 28
+            sheet.row_dimensions[1].height = 24
+        book.save(path)
+    finally:
+        book.close()
 
-'''
-output
-'''
 
-print('算法结束导入数据'+filename[-6])
+def save_processed(frame: pd.DataFrame, file_number: int, output: Path) -> Path:
+    path = output / f"文件{file_number}_预处理结果.xlsx"
+    sheet = f"预处理数据{file_number}"
+    with pd.ExcelWriter(path, engine="openpyxl", datetime_format="yyyy-mm-dd hh:mm:ss") as writer:
+        frame.to_excel(writer, sheet_name=sheet, index=False)
+    style_workbook(path)
+    return path
 
-writer = pd.ExcelWriter('result'+filename[-6]+'.xlsx')
-sheetname='文件'+filename[-6]+'的运动学片段'
-data_new.to_excel(writer, sheet_name = sheetname, index = False)
-writer.save()
+
+def save_summary(summary: pd.DataFrame, config: PreprocessConfig, output: Path) -> Path:
+    methods = pd.DataFrame(
+        [
+            ("时间解析", "按原时间字段解析；重复、倒序或非法时间直接报错"),
+            ("短时缺测", f"仅对恰好 {config.interpolate_gap_seconds} 秒的相邻记录补1个线性插值点"),
+            ("长时缺测", f"超过 {config.interpolate_gap_seconds} 秒不插值，作为新连续段"),
+            ("异常加速", f"连续1秒最大加速度 {config.max_acceleration_mps2:g} m/s²"),
+            ("异常减速", f"连续1秒最大减速度 {config.max_deceleration_mps2:g} m/s²"),
+            ("长低速段", f"连续速度低于 {config.low_speed_kmh:g} km/h 的记录最多保留 {config.max_low_speed_records} 条"),
+            ("原始值", "原附件不覆盖；输出保留原GPS车速、处理标记和原始行号"),
+        ],
+        columns=["项目", "规则"],
+    )
+    path = output / "预处理汇总.xlsx"
+    with pd.ExcelWriter(path, engine="openpyxl") as writer:
+        summary.to_excel(writer, sheet_name="处理汇总", index=False)
+        methods.to_excel(writer, sheet_name="方法与阈值", index=False)
+    style_workbook(path)
+    return path
+
+
+def main() -> None:
+    OUTPUT.mkdir(parents=True, exist_ok=True)
+    log = Progress(OUTPUT)
+    config = PreprocessConfig()
+    summary_path = OUTPUT / "run_summary.json"
+    run = {"status": "running", "started_at": datetime.now().astimezone().isoformat()}
+    summary_path.write_text(json_text(run), encoding="utf-8")
+
+    try:
+        log("2019年D题第一问开始；原始附件只读，结果写入优化结果")
+        log(f"当前解释器：{sys.executable}")
+        missing = [path.name for path in INPUTS if not path.is_file()]
+        if missing:
+            raise FileNotFoundError(f"缺少原始文件：{missing}")
+        input_hashes = {path.name: sha256(path) for path in INPUTS}
+
+        summaries = []
+        output_files = []
+        for file_number, path in enumerate(INPUTS, 1):
+            log(f"[{file_number}/3] 读取 {path.name}")
+            raw = read_input(path, file_number)
+            log(f"[{file_number}/3] 原始记录 {len(raw):,} 条，开始补点、限幅和长低速处理")
+            processed, detail, metrics = preprocess_vehicle_data(raw, config)
+            validate_processed_data(processed, config)
+            result_path = save_processed(processed, file_number, OUTPUT)
+            detail_path = OUTPUT / f"文件{file_number}_处理明细.csv"
+            detail.to_csv(detail_path, index=False, encoding="utf-8-sig", date_format="%Y-%m-%d %H:%M:%S")
+            metrics["文件"] = f"文件{file_number}"
+            summaries.append(metrics)
+            output_files.extend([result_path, detail_path])
+            log(
+                f"[{file_number}/3] 完成：{metrics['原始记录数']:,} → {metrics['处理后记录数']:,} 条；"
+                f"补点 {metrics['插值新增数']:,}，修正车速 {metrics['车速修正数']:,}，"
+                f"删除长低速记录 {metrics['长低速删除数']:,}"
+            )
+
+        summary = pd.DataFrame(summaries)
+        summary = summary[["文件"] + [column for column in summary.columns if column != "文件"]]
+        summary.to_csv(OUTPUT / "处理汇总.csv", index=False, encoding="utf-8-sig")
+        workbook = save_summary(summary, config, OUTPUT)
+        output_files.extend([OUTPUT / "处理汇总.csv", workbook])
+
+        log("[4/4] 重读结果并核验行数、字段、时间和速度约束")
+        for file_number, expected in enumerate(summaries, 1):
+            path = OUTPUT / f"文件{file_number}_预处理结果.xlsx"
+            saved = pd.read_excel(path, sheet_name=f"预处理数据{file_number}")
+            if len(saved) != expected["处理后记录数"]:
+                raise AssertionError(f"{path.name} 保存行数不一致。")
+            validate_processed_data(saved, config)
+        saved_summary = pd.read_excel(workbook, sheet_name="处理汇总")
+        pd.testing.assert_frame_equal(saved_summary, summary, check_dtype=False)
+
+        for path in INPUTS:
+            if sha256(path) != input_hashes[path.name]:
+                raise AssertionError(f"原始输入在运行期间发生改变：{path.name}")
+
+        run.update(
+            status="completed",
+            completed_at=datetime.now().astimezone().isoformat(),
+            elapsed_seconds=round(perf_counter() - log.start, 2),
+            executable=sys.executable,
+            python=platform.python_version(),
+            dependencies={name: importlib.metadata.version(name) for name in ["numpy", "pandas", "openpyxl"]},
+            config=config.__dict__,
+            input_sha256=input_hashes,
+            code_sha256={path.name: sha256(path) for path in [BASE / "main.py", BASE / "preprocessing.py"]},
+            output_sha256={path.name: sha256(path) for path in output_files},
+            results=summary.to_dict("records"),
+            verification="三份结果重读，时间唯一递增，连续点加减速度、长低速长度和输入哈希全部通过",
+        )
+        summary_path.write_text(json_text(run), encoding="utf-8")
+        log(f"全部完成，结果目录：{OUTPUT}")
+    except Exception as exc:
+        run.update(status="failed", error=f"{type(exc).__name__}: {exc}")
+        summary_path.write_text(json_text(run), encoding="utf-8")
+        log(f"运行失败：{exc}")
+        raise
+
+
+if __name__ == "__main__":
+    main()
