@@ -18,6 +18,9 @@ from time import perf_counter
 
 import numpy as np
 import pandas as pd
+import matplotlib as mpl
+from matplotlib.backends.backend_agg import FigureCanvasAgg
+from matplotlib.figure import Figure
 from openpyxl import load_workbook
 from openpyxl.styles import Alignment, Font, PatternFill
 
@@ -148,6 +151,72 @@ def save_summary(summary: pd.DataFrame, config: PreprocessConfig, output: Path) 
     return path
 
 
+def save_summary_figure(summary: pd.DataFrame, output: Path) -> Path:
+    """绘制一张三文件预处理总览图，不改变 Spyder 当前绘图后端。"""
+    figure_dir = output / "figures"
+    figure_dir.mkdir(exist_ok=True)
+    path = figure_dir / "01_三文件预处理结果.png"
+    names = summary["文件"].tolist()
+    x = np.arange(len(names))
+    colors = {"原始记录": "#94A3B8", "处理后记录": "#2563EB",
+              "两秒补点": "#2A9D8F", "车速修正": "#E9C46A", "长低速删除": "#E76F51"}
+
+    with mpl.rc_context({
+        "font.sans-serif": ["Arial Unicode MS", "PingFang SC", "Microsoft YaHei", "SimHei", "DejaVu Sans"],
+        "axes.unicode_minus": False,
+        "font.size": 10,
+    }):
+        figure = Figure(figsize=(13.5, 6.6), facecolor="white", layout="constrained")
+        FigureCanvasAgg(figure)
+        axes = figure.subplots(1, 2, gridspec_kw={"width_ratios": [1, 1.25]})
+        figure.suptitle("三份车辆数据预处理结果", fontsize=16, fontweight="bold")
+
+        ax = axes[0]
+        width = 0.34
+        original = summary["原始记录数"].to_numpy()
+        processed = summary["处理后记录数"].to_numpy()
+        bars1 = ax.bar(x - width / 2, original, width, label="原始记录", color=colors["原始记录"])
+        bars2 = ax.bar(x + width / 2, processed, width, label="处理后记录", color=colors["处理后记录"])
+        ax.bar_label(bars1, labels=[f"{value:,}" for value in original], padding=3, fontsize=9)
+        ax.bar_label(bars2, labels=[f"{value:,}" for value in processed], padding=3, fontsize=9)
+        ax.set_title("记录数变化")
+        ax.set_ylabel("记录数（条）")
+        ax.set_xticks(x, names)
+        ax.set_ylim(0, max(original) * 1.18)
+        ax.legend(frameon=False, loc="upper right")
+        ax.grid(axis="y", color="#E2E8F0", linewidth=0.8)
+        ax.set_axisbelow(True)
+
+        ax = axes[1]
+        labels, values, bar_colors = [], [], []
+        for _, row in summary.iterrows():
+            for label, column in [("两秒补点", "插值新增数"), ("车速修正", "车速修正数"),
+                                  ("长低速删除", "长低速删除数")]:
+                labels.append(f"{row['文件']} · {label}")
+                values.append(int(row[column]))
+                bar_colors.append(colors[label])
+        positions = np.arange(len(labels))[::-1]
+        bars = ax.barh(positions, values, color=bar_colors, height=0.68)
+        ax.bar_label(bars, labels=[f"{value:,}" for value in values], padding=4, fontsize=9)
+        ax.set_title("各类处理记录数")
+        ax.set_xlabel("记录数（条）")
+        ax.set_yticks(positions, labels)
+        ax.set_xlim(0, max(values) * 1.18)
+        ax.grid(axis="x", color="#E2E8F0", linewidth=0.8)
+        ax.set_axisbelow(True)
+
+        for ax in axes:
+            ax.spines[["top", "right"]].set_visible(False)
+            ax.ticklabel_format(axis="x" if ax is axes[1] else "y", style="plain")
+        figure.text(
+            0.5, 0.005,
+            "规则：仅填补两秒缺口；连续1 Hz记录限制异常加减速度；连续低于10 km/h的长低速段最多保留180条",
+            ha="center", color="#475569", fontsize=9,
+        )
+        figure.savefig(path, dpi=220, bbox_inches="tight")
+    return path
+
+
 def main() -> None:
     OUTPUT.mkdir(parents=True, exist_ok=True)
     log = Progress(OUTPUT)
@@ -188,7 +257,9 @@ def main() -> None:
         summary = summary[["文件"] + [column for column in summary.columns if column != "文件"]]
         summary.to_csv(OUTPUT / "处理汇总.csv", index=False, encoding="utf-8-sig")
         workbook = save_summary(summary, config, OUTPUT)
-        output_files.extend([OUTPUT / "处理汇总.csv", workbook])
+        figure = save_summary_figure(summary, OUTPUT)
+        output_files.extend([OUTPUT / "处理汇总.csv", workbook, figure])
+        log(f"汇总图已保存：{figure.relative_to(OUTPUT)}")
 
         log("[4/4] 重读结果并核验行数、字段、时间和速度约束")
         for file_number, expected in enumerate(summaries, 1):
@@ -210,11 +281,11 @@ def main() -> None:
             elapsed_seconds=round(perf_counter() - log.start, 2),
             executable=sys.executable,
             python=platform.python_version(),
-            dependencies={name: importlib.metadata.version(name) for name in ["numpy", "pandas", "openpyxl"]},
+            dependencies={name: importlib.metadata.version(name) for name in ["numpy", "pandas", "openpyxl", "matplotlib"]},
             config=config.__dict__,
             input_sha256=input_hashes,
             code_sha256={path.name: sha256(path) for path in [BASE / "main.py", BASE / "preprocessing.py"]},
-            output_sha256={path.name: sha256(path) for path in output_files},
+            output_sha256={str(path.relative_to(OUTPUT)): sha256(path) for path in output_files},
             results=summary.to_dict("records"),
             verification="三份结果重读，时间唯一递增，连续点加减速度、长低速长度和输入哈希全部通过",
         )

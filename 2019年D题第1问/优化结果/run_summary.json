@@ -1,14 +1,15 @@
 {
   "status": "completed",
-  "started_at": "2026-09-22T09:55:26.630166+08:00",
-  "completed_at": "2026-09-22T09:58:50.718464+08:00",
-  "elapsed_seconds": 204.09,
+  "started_at": "2026-09-22T10:09:39.325340+08:00",
+  "completed_at": "2026-09-22T10:13:06.999666+08:00",
+  "elapsed_seconds": 207.67,
   "executable": "/opt/anaconda3/bin/python",
   "python": "3.13.5",
   "dependencies": {
     "numpy": "2.1.3",
     "pandas": "2.2.3",
-    "openpyxl": "3.1.5"
+    "openpyxl": "3.1.5",
+    "matplotlib": "3.10.0"
   },
   "config": {
     "interpolate_gap_seconds": 2,
@@ -23,18 +24,19 @@
     "文件3.xlsx": "2544bf9ff70c9317941d0248247892cf527cf31b19dddd9b035292749191eb8c"
   },
   "code_sha256": {
-    "main.py": "08d6cf1ae2d9eff0dec856b63ca3bd9af9c17225b6eddab05ee7b814e2f12564",
+    "main.py": "f81740f98ddcd122104b154320390074805f2764552415ee68a3f15d17713b5b",
     "preprocessing.py": "2def043c8bb4d622842d6b402d9cd615af840428a13ae83930412047e210c50a"
   },
   "output_sha256": {
-    "文件1_预处理结果.xlsx": "47aae8e100ac913b9e03b371a3a43b0a19caf142b9756f731740de96d02fd45e",
+    "文件1_预处理结果.xlsx": "f9d9b959019675c0fb90b9cc620ac1c17eb449685bb3ae57bf58815f8d944f57",
     "文件1_处理明细.csv": "bebb903e59b7c26b5db0bfc7b7241f98083e1d515c2e80fa0779b92605787156",
-    "文件2_预处理结果.xlsx": "d2ac390047a93d6d8a2337f45a413d76d49887f85cc9e4027c7b5b719ffb0efc",
+    "文件2_预处理结果.xlsx": "b97d0a41bdf2b25aca1071ff79e2ec02604c76d7911759ca05901a165fb8bcda",
     "文件2_处理明细.csv": "c058258f4d030886d7ec1973ba8b2dd808de0a42ed62a4bb543e7283a16cdf4b",
-    "文件3_预处理结果.xlsx": "07834cd0549b1c4840b151d945a68ba01bd6332b9c542dc86d3b12ede8006ad6",
+    "文件3_预处理结果.xlsx": "ef71475a9ea00578b47dd292e4261a390f3ebfc9c067de772bdb1fd9526abee6",
     "文件3_处理明细.csv": "60c9f1cc523a8059022269906345e66bef6c4aaf1870d40e450424ec7ab4f98f",
     "处理汇总.csv": "e81e7e3298881080ab2369d998b91d0f19af6f5b1eb86bd8ba37ea91ad94aa72",
-    "预处理汇总.xlsx": "99b15f973cd2c4bf6f08d89514db5e693a94c07c44a7e21059d9afd8d46a44dc"
+    "预处理汇总.xlsx": "80c3106d80707fef44c3bbd00a9963f14bfbfacfbbafa8372f267f47519ae297",
+    "figures/01_三文件预处理结果.png": "912806e1d1f0c9205e3b6d9d24e3ef7ee7d18cf0555610e2e2384f48bedd0430"
   },
   "results": [
     {
